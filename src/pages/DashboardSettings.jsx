@@ -26,7 +26,8 @@ export default function DashboardSettings() {
     slug: '',
     bio: '',
     image_url: '',
-    cover_url: ''
+    cover_url: '',
+    thank_you_note: ''
   });
 
   useEffect(() => {
@@ -57,7 +58,8 @@ export default function DashboardSettings() {
         slug: artist.slug || '',
         bio: artist.bio || '',
         image_url: artist.image_url || '',
-        cover_url: artist.cover_url || ''
+        cover_url: artist.cover_url || '',
+        thank_you_note: artist.thank_you_note || ''
       });
     }
   }, [artist]);
@@ -156,7 +158,8 @@ export default function DashboardSettings() {
       bio: formData.bio,
       image_url: imageUrl,
       cover_url: coverUrl,
-      owner_email: user.email
+      owner_email: user.email,
+      thank_you_note: formData.thank_you_note
     };
 
     if (artist) {
@@ -315,6 +318,27 @@ export default function DashboardSettings() {
                     rows={4}
                   />
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Thank You Note */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Thank You Note</CardTitle>
+                <CardDescription>
+                  A personal message automatically sent to fans with every purchase
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Textarea
+                  value={formData.thank_you_note}
+                  onChange={(e) => setFormData({ ...formData, thank_you_note: e.target.value })}
+                  placeholder="Thanks so much for supporting my music! I hope you enjoy this release. - Your Name"
+                  rows={4}
+                />
+                <p className="text-xs text-neutral-500 mt-2">
+                  This will be included in every purchase confirmation email
+                </p>
               </CardContent>
             </Card>
 

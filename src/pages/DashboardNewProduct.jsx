@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Upload, X, Music, Loader2, Plus } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 
 export default function DashboardNewProduct() {
@@ -26,7 +27,12 @@ export default function DashboardNewProduct() {
     type: 'single',
     description: '',
     price: '',
-    track_names: []
+    track_names: [],
+    edition_type: 'unlimited',
+    edition_limit: '',
+    edition_name: '',
+    drop_window_enabled: false,
+    drop_window_days: ''
   });
 
   useEffect(() => {
@@ -130,6 +136,20 @@ export default function DashboardNewProduct() {
       }
     }
 
+    // Prepare edition and drop window data
+    const editionData = formData.edition_type === 'limited' ? {
+      edition_type: 'limited',
+      edition_limit: parseInt(formData.edition_limit),
+      edition_name: formData.edition_name || 'Limited Edition'
+    } : {
+      edition_type: 'unlimited'
+    };
+
+    const dropWindowData = formData.drop_window_enabled && formData.drop_window_days ? {
+      drop_window_enabled: true,
+      drop_window_end: new Date(Date.now() + parseInt(formData.drop_window_days) * 24 * 60 * 60 * 1000).toISOString()
+    } : {};
+
     // Create product
     const product = await base44.entities.Product.create({
       artist_id: artist.id,
@@ -143,7 +163,9 @@ export default function DashboardNewProduct() {
       cover_url: coverUrl,
       audio_urls: audioUrls,
       track_names: formData.track_names,
-      status: publish ? 'live' : 'draft'
+      status: publish ? 'live' : 'draft',
+      ...editionData,
+      ...dropWindowData
     });
 
     setUploading(false);
@@ -285,6 +307,95 @@ export default function DashboardNewProduct() {
                   />
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Edition Settings */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Edition (Optional)</CardTitle>
+              <CardDescription>Create scarcity with limited editions</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label>Limited Edition</Label>
+                  <p className="text-sm text-neutral-500">Limit the number of copies available</p>
+                </div>
+                <Switch
+                  checked={formData.edition_type === 'limited'}
+                  onCheckedChange={(checked) => 
+                    setFormData({ ...formData, edition_type: checked ? 'limited' : 'unlimited' })
+                  }
+                />
+              </div>
+
+              {formData.edition_type === 'limited' && (
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+                  <div>
+                    <Label htmlFor="edition_limit">Copy Limit</Label>
+                    <Input
+                      id="edition_limit"
+                      type="number"
+                      min="1"
+                      value={formData.edition_limit}
+                      onChange={(e) => setFormData({ ...formData, edition_limit: e.target.value })}
+                      placeholder="1000"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edition_name">Edition Name</Label>
+                    <Input
+                      id="edition_name"
+                      value={formData.edition_name}
+                      onChange={(e) => setFormData({ ...formData, edition_name: e.target.value })}
+                      placeholder="First Press"
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Drop Window */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Drop Window (Optional)</CardTitle>
+              <CardDescription>Create urgency with time-limited availability</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label>Enable Drop Window</Label>
+                  <p className="text-sm text-neutral-500">Release will only be available for a set time</p>
+                </div>
+                <Switch
+                  checked={formData.drop_window_enabled}
+                  onCheckedChange={(checked) => 
+                    setFormData({ ...formData, drop_window_enabled: checked })
+                  }
+                />
+              </div>
+
+              {formData.drop_window_enabled && (
+                <div className="pt-4 border-t">
+                  <Label htmlFor="drop_window_days">Available For (Days)</Label>
+                  <Input
+                    id="drop_window_days"
+                    type="number"
+                    min="1"
+                    value={formData.drop_window_days}
+                    onChange={(e) => setFormData({ ...formData, drop_window_days: e.target.value })}
+                    placeholder="7"
+                    className="mt-1 max-w-[200px]"
+                  />
+                  <p className="text-xs text-neutral-500 mt-1">
+                    Release will be available starting from publication
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
