@@ -58,6 +58,8 @@ import DashboardNewProduct from './pages/DashboardNewProduct';
 import DashboardOrders from './pages/DashboardOrders';
 import DashboardPayouts from './pages/DashboardPayouts';
 import DashboardSettings from './pages/DashboardSettings';
+import ArtistSignup from './pages/ArtistSignup';
+import LibraryAccess from './pages/LibraryAccess';
 import __Layout from './Layout.jsx';
 
 
@@ -73,6 +75,8 @@ export const PAGES = {
     "DashboardOrders": DashboardOrders,
     "DashboardPayouts": DashboardPayouts,
     "DashboardSettings": DashboardSettings,
+    "ArtistSignup": ArtistSignup,
+    "LibraryAccess": LibraryAccess,
 }
 
 export const pagesConfig = {
