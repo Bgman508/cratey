@@ -3,10 +3,12 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '@/utils';
-import { Mail, Download, ArrowRight, ShoppingBag, Loader2, Music } from 'lucide-react';
+import { Mail, Download, ArrowRight, ShoppingBag, Loader2, Music, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import OwnershipCertificate from '@/components/library/OwnershipCertificate';
 import { toast } from 'sonner';
 
 export default function Library() {
@@ -204,18 +206,23 @@ Happy listening!
 function LibraryItemCard({ item }) {
   const [downloading, setDownloading] = useState(false);
 
+  const { data: order } = useQuery({
+    queryKey: ['order', item.order_id],
+    queryFn: async () => {
+      const orders = await base44.entities.Order.filter({ id: item.order_id });
+      return orders[0] || null;
+    },
+    enabled: !!item.order_id
+  });
+
   const handleDownload = async (url, trackName) => {
     setDownloading(true);
     
-    // In a real implementation, this would use signed URLs
-    // For now, we'll open the file in a new tab
     window.open(url, '_blank');
     
-    // Update download count
-    const orders = await base44.entities.Order.filter({ id: item.order_id });
-    if (orders[0]) {
-      await base44.entities.Order.update(orders[0].id, {
-        download_count: (orders[0].download_count || 0) + 1
+    if (order) {
+      await base44.entities.Order.update(order.id, {
+        download_count: (order.download_count || 0) + 1
       });
     }
     
@@ -225,58 +232,88 @@ function LibraryItemCard({ item }) {
 
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-      <div className="p-4 md:p-6 flex flex-col md:flex-row gap-4">
-        <Link to={createPageUrl('ProductPage') + `?id=${item.product_id}`}>
-          <img 
-            src={item.cover_url || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=200'} 
-            alt={item.product_title}
-            className="w-24 h-24 rounded-lg object-cover"
-          />
-        </Link>
-        
-        <div className="flex-1">
-          <Link to={createPageUrl('ProductPage') + `?id=${item.product_id}`}>
-            <h3 className="font-bold text-lg hover:text-neutral-600 transition-colors">
-              {item.product_title}
-            </h3>
-          </Link>
-          <Link 
-            to={createPageUrl('ArtistStorefront') + `?slug=${item.artist_slug}`}
-            className="text-neutral-600 hover:text-black transition-colors"
-          >
-            {item.artist_name}
-          </Link>
-          
-          <div className="mt-4">
-            <p className="text-sm text-neutral-500 mb-2">
-              Purchased {new Date(item.created_date).toLocaleDateString()}
-            </p>
-            
-            {/* Download Buttons */}
-            {item.audio_urls && item.audio_urls.length > 0 ? (
-              <div className="space-y-2">
-                {item.audio_urls.map((url, index) => (
-                  <Button
-                    key={index}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDownload(url, item.track_names?.[index])}
-                    disabled={downloading}
-                    className="mr-2"
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    {item.track_names?.[index] || `Track ${index + 1}`}
-                  </Button>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-neutral-400">Download files will be available soon</p>
-            )}
-          </div>
+      <Tabs defaultValue="downloads" className="w-full">
+        <div className="border-b border-neutral-100">
+          <TabsList className="w-full justify-start rounded-none bg-transparent h-auto p-0">
+            <TabsTrigger 
+              value="downloads" 
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-black"
+            >
+              Downloads
+            </TabsTrigger>
+            <TabsTrigger 
+              value="certificate"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-black"
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              Certificate
+            </TabsTrigger>
+          </TabsList>
         </div>
-      </div>
+
+        <TabsContent value="downloads" className="m-0">
+          <div className="p-4 md:p-6 flex flex-col md:flex-row gap-4">
+            <Link to={createPageUrl('ProductPage') + `?id=${item.product_id}`}>
+              <img 
+                src={item.cover_url || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=200'} 
+                alt={item.product_title}
+                className="w-24 h-24 rounded-lg object-cover"
+              />
+            </Link>
+            
+            <div className="flex-1">
+              <Link to={createPageUrl('ProductPage') + `?id=${item.product_id}`}>
+                <h3 className="font-bold text-lg hover:text-neutral-600 transition-colors">
+                  {item.product_title}
+                </h3>
+              </Link>
+              <Link 
+                to={createPageUrl('ArtistStorefront') + `?slug=${item.artist_slug}`}
+                className="text-neutral-600 hover:text-black transition-colors"
+              >
+                {item.artist_name}
+              </Link>
+              
+              {item.edition_name && (
+                <p className="text-sm text-neutral-500 mt-1">
+                  {item.edition_name} {item.edition_number && `#${item.edition_number}`}
+                </p>
+              )}
+              
+              <div className="mt-4">
+                <p className="text-sm text-neutral-500 mb-2">
+                  Purchased {new Date(item.purchase_date || item.created_date).toLocaleDateString()}
+                </p>
+                
+                {item.audio_urls && item.audio_urls.length > 0 ? (
+                  <div className="space-y-2">
+                    {item.audio_urls.map((url, index) => (
+                      <Button
+                        key={index}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDownload(url, item.track_names?.[index])}
+                        disabled={downloading}
+                        className="mr-2"
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        {item.track_names?.[index] || `Track ${index + 1}`}
+                      </Button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-neutral-400">Download files will be available soon</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="certificate" className="m-0 p-4 md:p-6">
+          <OwnershipCertificate item={item} order={order} />
+        </TabsContent>
+      </Tabs>
       
-      {/* You own this badge */}
       <div className="bg-green-50 border-t border-green-100 px-4 py-2">
         <p className="text-sm text-green-700 font-medium">
           ✓ You own this. Download anytime.

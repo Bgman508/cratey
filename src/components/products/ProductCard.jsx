@@ -3,8 +3,11 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Play, Pause } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import EditionBadge from '@/components/products/EditionBadge';
+import DropWindowCountdown from '@/components/products/DropWindowCountdown';
+import OwnedBadge from '@/components/products/OwnedBadge';
 
-export default function ProductCard({ product, showArtist = true }) {
+export default function ProductCard({ product, showArtist = true, isOwned = false }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef(null);
 
@@ -61,6 +64,13 @@ export default function ProductCard({ product, showArtist = true }) {
             {product.type}
           </span>
         </div>
+
+        {/* Owned Badge */}
+        {isOwned && (
+          <div className="absolute top-3 right-3">
+            <OwnedBadge />
+          </div>
+        )}
       </div>
 
       <h3 className="font-medium text-neutral-900 group-hover:text-neutral-600 transition-colors line-clamp-1">
@@ -73,9 +83,17 @@ export default function ProductCard({ product, showArtist = true }) {
         </p>
       )}
       
-      <p className="font-semibold mt-2">
-        ${(product.price_cents / 100).toFixed(2)}
-      </p>
+      <div className="mt-2 space-y-2">
+        <p className="font-semibold">
+          ${(product.price_cents / 100).toFixed(2)}
+        </p>
+        
+        {product.edition_type === 'limited' && !isOwned && (
+          <p className="text-xs text-neutral-500">
+            {product.edition_limit - (product.total_sales || 0)} of {product.edition_limit} left
+          </p>
+        )}
+      </div>
 
       {product.preview_url && (
         <audio 

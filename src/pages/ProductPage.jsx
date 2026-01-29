@@ -9,16 +9,21 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import EditionBadge from '@/components/products/EditionBadge';
+import DropWindowCountdown from '@/components/products/DropWindowCountdown';
+import OwnedBadge from '@/components/products/OwnedBadge';
 
 export default function ProductPage() {
   const urlParams = new URLSearchParams(window.location.search);
   const productId = urlParams.get('id');
+  const prefilledEmail = urlParams.get('email');
   
   const [isPlaying, setIsPlaying] = useState(false);
-  const [buyerEmail, setBuyerEmail] = useState('');
+  const [buyerEmail, setBuyerEmail] = useState(prefilledEmail || '');
   const [showCheckout, setShowCheckout] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [purchaseComplete, setPurchaseComplete] = useState(false);
+  const [userOwnsThis, setUserOwnsThis] = useState(false);
   const audioRef = useRef(null);
 
   const { data: product, isLoading } = useQuery({
@@ -48,6 +53,13 @@ export default function ProductPage() {
     return items.length > 0;
   };
 
+  // Check ownership on load if email provided
+  useEffect(() => {
+    if (prefilledEmail && productId) {
+      checkOwnership(prefilledEmail).then(setUserOwnsThis);
+    }
+  }, [prefilledEmail, productId]);
+
   const handleBuyClick = () => {
     setShowCheckout(true);
   };
@@ -69,8 +81,27 @@ export default function ProductPage() {
       return;
     }
 
-    // In a real implementation, this would create a Stripe Checkout session
-    // For now, we'll simulate the purchase flow
+    // Check if limited edition and sold out
+    if (product.edition_type === 'limited' && product.total_sales >= product.edition_limit) {
+      toast.error('This edition is sold out!');
+      setCheckoutLoading(false);
+      setShowCheckout(false);
+      return;
+    }
+
+    // Check if drop window expired
+    if (product.drop_window_enabled && new Date(product.drop_window_end) < new Date()) {
+      toast.error('This drop window has ended!');
+      setCheckoutLoading(false);
+      setShowCheckout(false);
+      return;
+    }
+
+    // Calculate edition number
+    const editionNumber = product.edition_type === 'limited' 
+      ? (product.total_sales || 0) + 1 
+      : null;
+
     const platformFee = Math.round(product.price_cents * 0.08);
     const artistPayout = product.price_cents - platformFee;
 
@@ -86,7 +117,9 @@ export default function ProductPage() {
       artist_payout_cents: artistPayout,
       currency: product.currency || 'USD',
       status: 'paid',
-      stripe_session_id: 'sim_' + Date.now()
+      stripe_session_id: 'sim_' + Date.now(),
+      edition_name: product.edition_name,
+      edition_number: editionNumber
     });
 
     // Create library item
@@ -101,7 +134,10 @@ export default function ProductPage() {
       cover_url: product.cover_url,
       audio_urls: product.audio_urls || [],
       track_names: product.track_names || [],
-      access_token: accessToken
+      access_token: accessToken,
+      edition_name: product.edition_name,
+      edition_number: editionNumber,
+      purchase_date: new Date().toISOString()
     });
 
     // Update product stats
@@ -110,19 +146,22 @@ export default function ProductPage() {
       total_revenue_cents: (product.total_revenue_cents || 0) + product.price_cents
     });
 
-    // Send email with library link
+    // Send email with library link and artist thank you note
+    const editionText = editionNumber ? `\n\nEdition: ${product.edition_name} #${editionNumber} of ${product.edition_limit}` : '';
+    const thankYouNote = artist?.thank_you_note ? `\n\n---\n\nA message from ${artist.name}:\n${artist.thank_you_note}` : '';
+    
     await base44.integrations.Core.SendEmail({
       to: buyerEmail,
       subject: `🎵 You own "${product.title}" - Download Now`,
       body: `
 Hi there!
 
-Thanks for your purchase! You now own "${product.title}" by ${product.artist_name}.
+Thanks for your purchase! You now own "${product.title}" by ${product.artist_name}.${editionText}
 
 Access your library anytime:
 ${window.location.origin}/Library?email=${encodeURIComponent(buyerEmail)}
 
-You can download your music whenever you want. No expiration, no limits.
+You can download your music whenever you want. No expiration, no limits.${thankYouNote}
 
 Enjoy!
 — The CRATEY Team
@@ -254,6 +293,27 @@ Enjoy!
                 <p className="text-neutral-600 mt-6">{product.description}</p>
               )}
 
+              {/* Owned Badge */}
+              {userOwnsThis && (
+                <div className="mt-6">
+                  <OwnedBadge className="text-base px-4 py-2" />
+                </div>
+              )}
+
+              {/* Drop Window */}
+              {product.drop_window_enabled && !userOwnsThis && (
+                <div className="mt-6">
+                  <DropWindowCountdown product={product} />
+                </div>
+              )}
+
+              {/* Edition Info */}
+              {product.edition_type === 'limited' && !userOwnsThis && (
+                <div className="mt-6">
+                  <EditionBadge product={product} />
+                </div>
+              )}
+
               {/* Track List */}
               {product.track_names && product.track_names.length > 0 && (
                 <div className="mt-8">
@@ -273,14 +333,14 @@ Enjoy!
 
               {/* Purchase Section */}
               <div className="mt-10 p-6 bg-neutral-50 rounded-2xl">
-                {purchaseComplete ? (
+                {purchaseComplete || userOwnsThis ? (
                   <div className="text-center">
                     <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                       <Check className="w-8 h-8 text-green-600" />
                     </div>
                     <h3 className="text-xl font-bold mb-2">You own this!</h3>
                     <p className="text-neutral-600 mb-4">Check your email for the download link, or visit your library.</p>
-                    <Link to={createPageUrl('Library')}>
+                    <Link to={createPageUrl('Library') + `?email=${encodeURIComponent(buyerEmail || prefilledEmail || '')}`}>
                       <Button className="bg-black text-white hover:bg-neutral-800">
                         Go to Your Crate
                       </Button>
@@ -298,8 +358,18 @@ Enjoy!
                       size="lg" 
                       className="w-full bg-black text-white hover:bg-neutral-800 h-14 text-lg"
                       onClick={handleBuyClick}
+                      disabled={
+                        (product.edition_type === 'limited' && product.total_sales >= product.edition_limit) ||
+                        (product.drop_window_enabled && new Date(product.drop_window_end) < new Date())
+                      }
                     >
-                      Buy Now
+                      {product.edition_type === 'limited' && product.total_sales >= product.edition_limit ? (
+                        'Sold Out'
+                      ) : product.drop_window_enabled && new Date(product.drop_window_end) < new Date() ? (
+                        'Drop Ended'
+                      ) : (
+                        'Buy Now'
+                      )}
                     </Button>
                     <p className="text-sm text-neutral-500 mt-4 text-center">
                       Instant download. Own it forever.

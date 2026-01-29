@@ -47,36 +47,36 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
-import Home from './pages/Home';
-import Artists from './pages/Artists';
+import ArtistSignup from './pages/ArtistSignup';
 import ArtistStorefront from './pages/ArtistStorefront';
-import ProductPage from './pages/ProductPage';
-import Library from './pages/Library';
+import Artists from './pages/Artists';
 import Dashboard from './pages/Dashboard';
-import DashboardProducts from './pages/DashboardProducts';
 import DashboardNewProduct from './pages/DashboardNewProduct';
 import DashboardOrders from './pages/DashboardOrders';
 import DashboardPayouts from './pages/DashboardPayouts';
+import DashboardProducts from './pages/DashboardProducts';
 import DashboardSettings from './pages/DashboardSettings';
-import ArtistSignup from './pages/ArtistSignup';
+import Home from './pages/Home';
+import Library from './pages/Library';
 import LibraryAccess from './pages/LibraryAccess';
+import ProductPage from './pages/ProductPage';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Home": Home,
-    "Artists": Artists,
+    "ArtistSignup": ArtistSignup,
     "ArtistStorefront": ArtistStorefront,
-    "ProductPage": ProductPage,
-    "Library": Library,
+    "Artists": Artists,
     "Dashboard": Dashboard,
-    "DashboardProducts": DashboardProducts,
     "DashboardNewProduct": DashboardNewProduct,
     "DashboardOrders": DashboardOrders,
     "DashboardPayouts": DashboardPayouts,
+    "DashboardProducts": DashboardProducts,
     "DashboardSettings": DashboardSettings,
-    "ArtistSignup": ArtistSignup,
+    "Home": Home,
+    "Library": Library,
     "LibraryAccess": LibraryAccess,
+    "ProductPage": ProductPage,
 }
 
 export const pagesConfig = {
