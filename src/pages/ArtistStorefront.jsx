@@ -12,6 +12,9 @@ import ProductCard from '@/components/products/ProductCard';
 export default function ArtistStorefront() {
   const urlParams = new URLSearchParams(window.location.search);
   const slug = urlParams.get('slug');
+  const emailParam = urlParams.get('email');
+  
+  const [ownedProductIds, setOwnedProductIds] = React.useState([]);
 
   const { data: artist, isLoading: artistLoading, error: artistError } = useQuery({
     queryKey: ['artist', slug],
@@ -26,6 +29,18 @@ export default function ArtistStorefront() {
     queryKey: ['artist-products', artist?.id],
     queryFn: () => base44.entities.Product.filter({ artist_id: artist.id, status: 'live' }, '-created_date'),
     enabled: !!artist?.id
+  });
+
+  // Check owned products
+  useQuery({
+    queryKey: ['owned-products-storefront', emailParam],
+    queryFn: async () => {
+      const items = await base44.entities.LibraryItem.filter({ buyer_email: emailParam.toLowerCase() });
+      const ids = items.map(item => item.product_id);
+      setOwnedProductIds(ids);
+      return items;
+    },
+    enabled: !!emailParam
   });
 
   if (!slug) {
@@ -183,7 +198,12 @@ export default function ArtistStorefront() {
           ) : products.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {products.map(product => (
-                <ProductCard key={product.id} product={product} showArtist={false} />
+                <ProductCard 
+                  key={product.id} 
+                  product={product} 
+                  showArtist={false}
+                  isOwned={ownedProductIds.includes(product.id)}
+                />
               ))}
             </div>
           ) : (
