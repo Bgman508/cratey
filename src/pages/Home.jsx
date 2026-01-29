@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
@@ -12,10 +12,33 @@ import ArtistCard from '@/components/artists/ArtistCard';
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [userEmail, setUserEmail] = useState('');
+  const [ownedProductIds, setOwnedProductIds] = useState([]);
   
   const { data: products = [], isLoading: productsLoading } = useQuery({
     queryKey: ['products', 'live'],
     queryFn: () => base44.entities.Product.filter({ status: 'live' }, '-created_date', 12)
+  });
+
+  // Check if user has email in URL (coming from library)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const emailParam = urlParams.get('email');
+    if (emailParam) {
+      setUserEmail(emailParam);
+    }
+  }, []);
+
+  // Fetch owned products
+  useQuery({
+    queryKey: ['owned-products', userEmail],
+    queryFn: async () => {
+      const items = await base44.entities.LibraryItem.filter({ buyer_email: userEmail.toLowerCase() });
+      const ids = items.map(item => item.product_id);
+      setOwnedProductIds(ids);
+      return items;
+    },
+    enabled: !!userEmail
   });
 
   const { data: artists = [], isLoading: artistsLoading } = useQuery({
@@ -145,7 +168,11 @@ export default function Home() {
         ) : filteredProducts.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {filteredProducts.map(product => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard 
+                key={product.id} 
+                product={product} 
+                isOwned={ownedProductIds.includes(product.id)}
+              />
             ))}
           </div>
         ) : (
