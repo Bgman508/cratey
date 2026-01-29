@@ -52,6 +52,12 @@ import Artists from './pages/Artists';
 import ArtistStorefront from './pages/ArtistStorefront';
 import ProductPage from './pages/ProductPage';
 import Library from './pages/Library';
+import Dashboard from './pages/Dashboard';
+import DashboardProducts from './pages/DashboardProducts';
+import DashboardNewProduct from './pages/DashboardNewProduct';
+import DashboardOrders from './pages/DashboardOrders';
+import DashboardPayouts from './pages/DashboardPayouts';
+import DashboardSettings from './pages/DashboardSettings';
 import __Layout from './Layout.jsx';
 
 
@@ -61,6 +67,12 @@ export const PAGES = {
     "ArtistStorefront": ArtistStorefront,
     "ProductPage": ProductPage,
     "Library": Library,
+    "Dashboard": Dashboard,
+    "DashboardProducts": DashboardProducts,
+    "DashboardNewProduct": DashboardNewProduct,
+    "DashboardOrders": DashboardOrders,
+    "DashboardPayouts": DashboardPayouts,
+    "DashboardSettings": DashboardSettings,
 }
 
 export const pagesConfig = {
