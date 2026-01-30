@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import OwnershipCertificate from '@/components/library/OwnershipCertificate';
+import TrackList from '@/components/audio/TrackList';
 import { toast } from 'sonner';
 
 export default function Library() {
@@ -281,26 +282,17 @@ function LibraryItemCard({ item }) {
               )}
               
               <div className="mt-4">
-                <p className="text-sm text-neutral-500 mb-2">
+                <p className="text-sm text-neutral-500 mb-4">
                   Purchased {new Date(item.purchase_date || item.created_date).toLocaleDateString()}
                 </p>
                 
                 {item.audio_urls && item.audio_urls.length > 0 ? (
-                  <div className="space-y-2">
-                    {item.audio_urls.map((url, index) => (
-                      <Button
-                        key={index}
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDownload(url, item.track_names?.[index])}
-                        disabled={downloading}
-                        className="mr-2"
-                      >
-                        <Download className="w-4 h-4 mr-2" />
-                        {item.track_names?.[index] || `Track ${index + 1}`}
-                      </Button>
-                    ))}
-                  </div>
+                  <TrackList
+                    tracks={item.audio_urls}
+                    trackNames={item.track_names}
+                    isPreview={false}
+                    onDownload={(track) => handleDownload(track.url, track.name)}
+                  />
                 ) : (
                   <p className="text-sm text-neutral-400">Download files will be available soon</p>
                 )}

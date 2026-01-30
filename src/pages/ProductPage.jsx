@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import EditionBadge from '@/components/products/EditionBadge';
 import DropWindowCountdown from '@/components/products/DropWindowCountdown';
 import OwnedBadge from '@/components/products/OwnedBadge';
+import TrackList from '@/components/audio/TrackList';
 
 export default function ProductPage() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -174,17 +175,7 @@ Enjoy!
     toast.success('Purchase complete! Check your email.');
   };
 
-  const handlePreviewToggle = () => {
-    if (!product?.preview_url) return;
-    
-    if (isPlaying) {
-      audioRef.current?.pause();
-      setIsPlaying(false);
-    } else {
-      audioRef.current?.play();
-      setIsPlaying(true);
-    }
-  };
+
 
   if (!productId) {
     return (
@@ -259,20 +250,7 @@ Enjoy!
                 className="w-full h-full object-cover"
               />
               
-              {/* Preview Button */}
-              {product.preview_url && (
-                <button
-                  onClick={handlePreviewToggle}
-                  className="absolute bottom-6 right-6 w-16 h-16 rounded-full bg-white shadow-lg flex items-center justify-center hover:scale-105 transition-transform"
-                >
-                  {isPlaying ? (
-                    <Pause className="w-7 h-7 text-black" />
-                  ) : (
-                    <Play className="w-7 h-7 text-black ml-1" />
-                  )}
-                </button>
-              )}
-            </div>
+              </div>
 
             {/* Product Info */}
             <div>
@@ -314,20 +292,18 @@ Enjoy!
                 </div>
               )}
 
-              {/* Track List */}
+              {/* Track List with Playback */}
               {product.track_names && product.track_names.length > 0 && (
                 <div className="mt-8">
-                  <h3 className="text-sm font-medium text-neutral-500 uppercase tracking-wider mb-3">
-                    Tracks
+                  <h3 className="text-sm font-medium text-neutral-500 uppercase tracking-wider mb-4">
+                    {userOwnsThis ? 'Play Full Tracks' : 'Preview Tracks'}
                   </h3>
-                  <ul className="space-y-2">
-                    {product.track_names.map((track, index) => (
-                      <li key={index} className="flex items-center gap-3 py-2 border-b border-neutral-100">
-                        <span className="text-sm text-neutral-400 w-6">{index + 1}</span>
-                        <span className="font-medium">{track}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <TrackList
+                    tracks={userOwnsThis ? product.audio_urls : product.audio_urls?.map(url => url)} 
+                    trackNames={product.track_names}
+                    isPreview={!userOwnsThis}
+                    onBuyClick={() => setShowCheckout(true)}
+                  />
                 </div>
               )}
 
@@ -449,15 +425,7 @@ Enjoy!
         </DialogContent>
       </Dialog>
 
-      {/* Audio Element */}
-      {product.preview_url && (
-        <audio 
-          ref={audioRef}
-          src={product.preview_url}
-          onEnded={() => setIsPlaying(false)}
-          className="hidden"
-        />
-      )}
+
     </div>
   );
 }

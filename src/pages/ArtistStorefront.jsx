@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ProductCard from '@/components/products/ProductCard';
+import TrackList from '@/components/audio/TrackList';
 
 export default function ArtistStorefront() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -167,7 +168,20 @@ export default function ArtistStorefront() {
                     <h3 className="text-2xl md:text-3xl font-bold mb-4 group-hover:text-neutral-600 transition-colors">
                       {featuredProduct.title}
                     </h3>
-                    <div className="flex items-center gap-4">
+                    
+                    {/* Preview Tracks */}
+                    {featuredProduct.audio_urls && featuredProduct.audio_urls.length > 0 && (
+                      <div className="mb-4">
+                        <TrackList
+                          tracks={featuredProduct.audio_urls}
+                          trackNames={featuredProduct.track_names}
+                          isPreview={true}
+                          onBuyClick={() => window.location.href = createPageUrl('ProductPage') + `?id=${featuredProduct.id}`}
+                        />
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center gap-4 mt-4">
                       <span className="text-2xl font-bold">
                         ${(featuredProduct.price_cents / 100).toFixed(2)}
                       </span>
