@@ -12,7 +12,8 @@ import {
   Menu,
   X,
   ExternalLink,
-  CreditCard
+  CreditCard,
+  BarChart3
 } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
@@ -20,6 +21,7 @@ const navItems = [
   { name: 'Dashboard', icon: LayoutDashboard, page: 'Dashboard' },
   { name: 'Products', icon: Package, page: 'DashboardProducts' },
   { name: 'Orders', icon: ShoppingCart, page: 'DashboardOrders' },
+  { name: 'Analytics', icon: BarChart3, page: 'DashboardAnalytics' },
   { name: 'Payouts', icon: CreditCard, page: 'DashboardPayouts' },
   { name: 'Settings', icon: Settings, page: 'DashboardSettings' },
 ];
