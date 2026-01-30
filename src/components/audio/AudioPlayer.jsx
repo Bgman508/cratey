@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Pause, Download, ShoppingBag } from 'lucide-react';
+import { Play, Pause, Download, ShoppingBag, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
+import { usePreviewRateLimit } from './RateLimiter';
 
 export default function AudioPlayer({ 
   track,
@@ -15,6 +16,7 @@ export default function AudioPlayer({
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const { canPlay, playsRemaining, recordPlay } = usePreviewRateLimit();
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -47,10 +49,21 @@ export default function AudioPlayer({
   const togglePlay = () => {
     if (isPlaying) {
       audioRef.current?.pause();
+      setIsPlaying(false);
     } else {
+      // Rate limit check for previews only
+      if (isPreview && !canPlay) {
+        return;
+      }
+      
       audioRef.current?.play();
+      setIsPlaying(true);
+      
+      // Record play for rate limiting
+      if (isPreview) {
+        recordPlay();
+      }
     }
-    setIsPlaying(!isPlaying);
   };
 
   const handleSeek = (value) => {
@@ -73,11 +86,22 @@ export default function AudioPlayer({
     <div className={cn("bg-neutral-50 rounded-xl p-4", className)}>
       <audio ref={audioRef} src={track.url} preload="metadata" />
       
+      {isPreview && !canPlay && (
+        <div className="mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-2 text-sm text-yellow-800">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          <span>Preview limit reached. Buy to listen fully.</span>
+        </div>
+      )}
+      
       <div className="flex items-center gap-4">
         {/* Play Button */}
         <button
           onClick={togglePlay}
-          className="w-12 h-12 rounded-full bg-black text-white flex items-center justify-center hover:bg-neutral-800 transition-colors flex-shrink-0"
+          disabled={isPreview && !canPlay}
+          className={cn(
+            "w-12 h-12 rounded-full bg-black text-white flex items-center justify-center hover:bg-neutral-800 transition-colors flex-shrink-0",
+            isPreview && !canPlay && "opacity-50 cursor-not-allowed"
+          )}
         >
           {isPlaying ? (
             <Pause className="w-5 h-5" />

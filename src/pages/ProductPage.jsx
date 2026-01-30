@@ -103,8 +103,14 @@ export default function ProductPage() {
       ? (product.total_sales || 0) + 1 
       : null;
 
-    const platformFee = Math.round(product.price_cents * 0.08);
-    const artistPayout = product.price_cents - platformFee;
+    // Use archive price if drop ended
+    const isDropEnded = product.drop_window_enabled && new Date(product.drop_window_end) < new Date();
+    const actualPrice = isDropEnded && product.archive_price_cents 
+      ? product.archive_price_cents 
+      : product.price_cents;
+    
+    const platformFee = Math.round(actualPrice * 0.08);
+    const artistPayout = actualPrice - platformFee;
 
     // Create order
     const order = await base44.entities.Order.create({
@@ -113,7 +119,7 @@ export default function ProductPage() {
       product_title: product.title,
       artist_name: product.artist_name,
       buyer_email: buyerEmail.toLowerCase(),
-      amount_cents: product.price_cents,
+      amount_cents: actualPrice,
       platform_fee_cents: platformFee,
       artist_payout_cents: artistPayout,
       currency: product.currency || 'USD',
@@ -144,7 +150,7 @@ export default function ProductPage() {
     // Update product stats
     await base44.entities.Product.update(product.id, {
       total_sales: (product.total_sales || 0) + 1,
-      total_revenue_cents: (product.total_revenue_cents || 0) + product.price_cents
+      total_revenue_cents: (product.total_revenue_cents || 0) + actualPrice
     });
 
     // Send email with library link and artist thank you note
@@ -299,7 +305,10 @@ Enjoy!
                     {userOwnsThis ? 'Play Full Tracks' : 'Preview Tracks'}
                   </h3>
                   <TrackList
-                    tracks={userOwnsThis ? product.audio_urls : product.audio_urls?.map(url => url)} 
+                    tracks={userOwnsThis 
+                      ? product.audio_urls 
+                      : (product.preview_urls || product.audio_urls)
+                    }
                     trackNames={product.track_names}
                     isPreview={!userOwnsThis}
                     onBuyClick={() => setShowCheckout(true)}
@@ -325,10 +334,26 @@ Enjoy!
                 ) : (
                   <>
                     <div className="flex items-baseline gap-2 mb-4">
-                      <span className="text-4xl font-bold">
-                        ${(product.price_cents / 100).toFixed(2)}
-                      </span>
-                      <span className="text-neutral-500">{product.currency || 'USD'}</span>
+                      {product.drop_window_enabled && 
+                       product.archive_price_cents && 
+                       new Date(product.drop_window_end) < new Date() ? (
+                        <>
+                          <span className="text-4xl font-bold">
+                            ${(product.archive_price_cents / 100).toFixed(2)}
+                          </span>
+                          <span className="text-lg text-neutral-400 line-through">
+                            ${(product.price_cents / 100).toFixed(2)}
+                          </span>
+                          <span className="text-sm text-neutral-500 ml-2">Archive Price</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-4xl font-bold">
+                            ${(product.price_cents / 100).toFixed(2)}
+                          </span>
+                          <span className="text-neutral-500">{product.currency || 'USD'}</span>
+                        </>
+                      )}
                     </div>
                     <Button 
                       size="lg" 

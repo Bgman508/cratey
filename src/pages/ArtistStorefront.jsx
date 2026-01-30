@@ -173,7 +173,7 @@ export default function ArtistStorefront() {
                     {featuredProduct.audio_urls && featuredProduct.audio_urls.length > 0 && (
                       <div className="mb-4">
                         <TrackList
-                          tracks={featuredProduct.audio_urls}
+                          tracks={featuredProduct.preview_urls || featuredProduct.audio_urls}
                           trackNames={featuredProduct.track_names}
                           isPreview={true}
                           onBuyClick={() => window.location.href = createPageUrl('ProductPage') + `?id=${featuredProduct.id}`}

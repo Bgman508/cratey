@@ -20,6 +20,7 @@ export default function DashboardNewProduct() {
   const [coverFile, setCoverFile] = useState(null);
   const [coverPreview, setCoverPreview] = useState(null);
   const [audioFiles, setAudioFiles] = useState([]);
+  const [previewFiles, setPreviewFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -27,12 +28,16 @@ export default function DashboardNewProduct() {
     type: 'single',
     description: '',
     price: '',
+    archive_price: '',
     track_names: [],
     edition_type: 'unlimited',
     edition_limit: '',
     edition_name: '',
     drop_window_enabled: false,
-    drop_window_days: ''
+    drop_window_days: '',
+    bundle_enabled: false,
+    bundle_product_ids: [],
+    bundle_discount_percent: ''
   });
 
   useEffect(() => {
@@ -75,6 +80,11 @@ export default function DashboardNewProduct() {
       ...prev,
       track_names: [...prev.track_names, ...newTracks.map(t => t.name)]
     }));
+  };
+
+  const handlePreviewChange = (e) => {
+    const files = Array.from(e.target.files);
+    setPreviewFiles(prev => [...prev, ...files]);
   };
 
   const removeTrack = (index) => {
@@ -136,6 +146,19 @@ export default function DashboardNewProduct() {
       }
     }
 
+    // Upload preview files
+    const previewUrls = [];
+    for (const preview of previewFiles) {
+      try {
+        const { file_url } = await base44.integrations.Core.UploadFile({ file: preview });
+        previewUrls.push(file_url);
+      } catch (e) {
+        toast.error(`Failed to upload preview`);
+        setUploading(false);
+        return;
+      }
+    }
+
     // Prepare edition and drop window data
     const editionData = formData.edition_type === 'limited' ? {
       edition_type: 'limited',
@@ -147,7 +170,14 @@ export default function DashboardNewProduct() {
 
     const dropWindowData = formData.drop_window_enabled && formData.drop_window_days ? {
       drop_window_enabled: true,
-      drop_window_end: new Date(Date.now() + parseInt(formData.drop_window_days) * 24 * 60 * 60 * 1000).toISOString()
+      drop_window_end: new Date(Date.now() + parseInt(formData.drop_window_days) * 24 * 60 * 60 * 1000).toISOString(),
+      archive_price_cents: formData.archive_price ? Math.round(parseFloat(formData.archive_price) * 100) : null
+    } : {};
+
+    const bundleData = formData.bundle_enabled ? {
+      bundle_enabled: true,
+      bundle_product_ids: formData.bundle_product_ids,
+      bundle_discount_percent: parseFloat(formData.bundle_discount_percent) || 0
     } : {};
 
     // Create product
@@ -162,10 +192,12 @@ export default function DashboardNewProduct() {
       currency: 'USD',
       cover_url: coverUrl,
       audio_urls: audioUrls,
+      preview_urls: previewUrls,
       track_names: formData.track_names,
       status: publish ? 'live' : 'draft',
       ...editionData,
-      ...dropWindowData
+      ...dropWindowData,
+      ...bundleData
     });
 
     setUploading(false);
@@ -380,20 +412,85 @@ export default function DashboardNewProduct() {
               </div>
 
               {formData.drop_window_enabled && (
-                <div className="pt-4 border-t">
-                  <Label htmlFor="drop_window_days">Available For (Days)</Label>
-                  <Input
-                    id="drop_window_days"
-                    type="number"
-                    min="1"
-                    value={formData.drop_window_days}
-                    onChange={(e) => setFormData({ ...formData, drop_window_days: e.target.value })}
-                    placeholder="7"
-                    className="mt-1 max-w-[200px]"
-                  />
-                  <p className="text-xs text-neutral-500 mt-1">
-                    Release will be available starting from publication
-                  </p>
+                <div className="pt-4 border-t space-y-4">
+                  <div>
+                    <Label htmlFor="drop_window_days">Available For (Days)</Label>
+                    <Input
+                      id="drop_window_days"
+                      type="number"
+                      min="1"
+                      value={formData.drop_window_days}
+                      onChange={(e) => setFormData({ ...formData, drop_window_days: e.target.value })}
+                      placeholder="7"
+                      className="mt-1 max-w-[200px]"
+                    />
+                    <p className="text-xs text-neutral-500 mt-1">
+                      Release will be available starting from publication
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="archive_price">Archive Price (USD) - Optional</Label>
+                    <div className="relative mt-1 max-w-[200px]">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500">$</span>
+                      <Input
+                        id="archive_price"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={formData.archive_price}
+                        onChange={(e) => setFormData({ ...formData, archive_price: e.target.value })}
+                        placeholder="19.99"
+                        className="pl-7"
+                      />
+                    </div>
+                    <p className="text-xs text-neutral-500 mt-1">
+                      Higher price after drop ends (leave empty to keep same price)
+                    </p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Automatic Bundles */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Bundle (Optional)</CardTitle>
+              <CardDescription>Offer this with other products at a discount</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label>Enable Bundle</Label>
+                  <p className="text-sm text-neutral-500">Recommend this with other products</p>
+                </div>
+                <Switch
+                  checked={formData.bundle_enabled}
+                  onCheckedChange={(checked) => 
+                    setFormData({ ...formData, bundle_enabled: checked })
+                  }
+                />
+              </div>
+
+              {formData.bundle_enabled && (
+                <div className="pt-4 border-t space-y-4">
+                  <div>
+                    <Label htmlFor="bundle_discount">Bundle Discount (%)</Label>
+                    <Input
+                      id="bundle_discount"
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={formData.bundle_discount_percent}
+                      onChange={(e) => setFormData({ ...formData, bundle_discount_percent: e.target.value })}
+                      placeholder="10"
+                      className="mt-1 max-w-[200px]"
+                    />
+                    <p className="text-xs text-neutral-500 mt-1">
+                      Note: Bundle product selection coming soon
+                    </p>
+                  </div>
                 </div>
               )}
             </CardContent>
@@ -402,8 +499,8 @@ export default function DashboardNewProduct() {
           {/* Audio Files */}
           <Card>
             <CardHeader>
-              <CardTitle>Audio Files</CardTitle>
-              <CardDescription>Upload MP3 or WAV files</CardDescription>
+              <CardTitle>Full Audio Files</CardTitle>
+              <CardDescription>Upload full-length MP3 or WAV files</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -440,10 +537,47 @@ export default function DashboardNewProduct() {
                   <Button variant="outline" className="w-full" asChild>
                     <span>
                       <Plus className="w-4 h-4 mr-2" />
-                      Add Tracks
+                      Add Full Tracks
                     </span>
                   </Button>
                 </label>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Preview Files */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Preview Files (30-60s)</CardTitle>
+              <CardDescription>Upload short preview clips for non-buyers</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {previewFiles.length > 0 && (
+                  <div className="text-sm text-neutral-600">
+                    {previewFiles.length} preview file{previewFiles.length !== 1 ? 's' : ''} uploaded
+                  </div>
+                )}
+                
+                <input
+                  type="file"
+                  accept="audio/*"
+                  multiple
+                  onChange={handlePreviewChange}
+                  className="hidden"
+                  id="preview-upload"
+                />
+                <label htmlFor="preview-upload">
+                  <Button variant="outline" className="w-full" asChild>
+                    <span>
+                      <Upload className="w-4 h-4 mr-2" />
+                      Upload Previews
+                    </span>
+                  </Button>
+                </label>
+                <p className="text-xs text-neutral-500">
+                  Upload one preview per track (same order as full tracks)
+                </p>
               </div>
             </CardContent>
           </Card>
