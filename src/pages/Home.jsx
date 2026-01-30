@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '@/utils';
-import { Search, ArrowRight, Play, Pause } from 'lucide-react';
+import { Search, ArrowRight, Play, Pause, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -46,11 +46,16 @@ export default function Home() {
     queryFn: () => base44.entities.Artist.list('-created_date', 8)
   });
 
-  const filteredProducts = products.filter(p => 
-    !searchQuery || 
-    p.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.artist_name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredProducts = products.filter(p => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      p.title?.toLowerCase().includes(query) ||
+      p.artist_name?.toLowerCase().includes(query) ||
+      p.type?.toLowerCase().includes(query) ||
+      p.description?.toLowerCase().includes(query)
+    );
+  });
 
   const featuredProduct = products.find(p => p.status === 'live');
 
@@ -93,11 +98,19 @@ export default function Home() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
             <Input
               type="text"
-              placeholder="Search for artists or releases..."
+              placeholder="Search for artists, releases, or genres..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-12 h-12 text-lg border-neutral-200 focus:border-black focus:ring-black"
             />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-black"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
           </div>
         </div>
       </section>

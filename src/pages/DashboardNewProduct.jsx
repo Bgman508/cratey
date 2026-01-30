@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Upload, X, Music, Loader2, Plus } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
+import BundleSelector from '@/components/products/BundleSelector';
 import { toast } from 'sonner';
 
 export default function DashboardNewProduct() {
@@ -487,9 +488,17 @@ export default function DashboardNewProduct() {
                       placeholder="10"
                       className="mt-1 max-w-[200px]"
                     />
-                    <p className="text-xs text-neutral-500 mt-1">
-                      Note: Bundle product selection coming soon
-                    </p>
+                  </div>
+                  
+                  <div>
+                    <Label>Select Products to Bundle</Label>
+                    <div className="mt-2">
+                      <BundleSelector
+                        artistId={artist.id}
+                        selectedIds={formData.bundle_product_ids}
+                        onChange={(ids) => setFormData({ ...formData, bundle_product_ids: ids })}
+                      />
+                    </div>
                   </div>
                 </div>
               )}

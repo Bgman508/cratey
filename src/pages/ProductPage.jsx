@@ -13,6 +13,8 @@ import EditionBadge from '@/components/products/EditionBadge';
 import DropWindowCountdown from '@/components/products/DropWindowCountdown';
 import OwnedBadge from '@/components/products/OwnedBadge';
 import TrackList from '@/components/audio/TrackList';
+import BundleOffer from '@/components/products/BundleOffer';
+import ShareButtons from '@/components/products/ShareButtons';
 
 export default function ProductPage() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -25,6 +27,7 @@ export default function ProductPage() {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [purchaseComplete, setPurchaseComplete] = useState(false);
   const [userOwnsThis, setUserOwnsThis] = useState(false);
+  const [bundleCheckout, setBundleCheckout] = useState(null);
   const audioRef = useRef(null);
 
   const { data: product, isLoading } = useQuery({
@@ -62,6 +65,12 @@ export default function ProductPage() {
   }, [prefilledEmail, productId]);
 
   const handleBuyClick = () => {
+    setBundleCheckout(null);
+    setShowCheckout(true);
+  };
+
+  const handleBundlePurchase = (bundleProducts, bundlePrice) => {
+    setBundleCheckout({ products: bundleProducts, price: bundlePrice });
     setShowCheckout(true);
   };
 
@@ -234,12 +243,18 @@ Enjoy!
               <ArrowLeft className="w-4 h-4" />
               <span className="text-sm">{artist ? `Back to ${artist.name}` : 'Back'}</span>
             </Link>
-            <Link to={createPageUrl('Library')}>
-              <Button variant="ghost" size="sm" className="gap-2">
-                <ShoppingBag className="w-4 h-4" />
-                <span className="hidden sm:inline">Your Crate</span>
-              </Button>
-            </Link>
+            <div className="flex items-center gap-2">
+              <ShareButtons 
+                title={`${product.title} by ${product.artist_name}`}
+                text={`Check out "${product.title}" by ${product.artist_name} on CRATEY`}
+              />
+              <Link to={createPageUrl('Library')}>
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <ShoppingBag className="w-4 h-4" />
+                  <span className="hidden sm:inline">Your Crate</span>
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </header>
@@ -312,6 +327,16 @@ Enjoy!
                     trackNames={product.track_names}
                     isPreview={!userOwnsThis}
                     onBuyClick={() => setShowCheckout(true)}
+                  />
+                </div>
+              )}
+
+              {/* Bundle Offer */}
+              {!userOwnsThis && !purchaseComplete && (
+                <div className="mt-8">
+                  <BundleOffer 
+                    product={product} 
+                    onBundlePurchase={handleBundlePurchase}
                   />
                 </div>
               )}
@@ -401,24 +426,62 @@ Enjoy!
           <DialogHeader>
             <DialogTitle>Complete Your Purchase</DialogTitle>
             <DialogDescription>
-              Enter your email to receive your download link
+              {bundleCheckout ? 'Bundle: Save on multiple releases' : 'Enter your email to receive your download link'}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 mt-4">
-            <div className="flex items-center gap-4 p-4 bg-neutral-50 rounded-lg">
-              <img 
-                src={product.cover_url} 
-                alt={product.title}
-                className="w-16 h-16 rounded-lg object-cover"
-              />
-              <div>
-                <p className="font-medium">{product.title}</p>
-                <p className="text-sm text-neutral-500">{product.artist_name}</p>
+            {bundleCheckout ? (
+              <>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-4 p-4 bg-neutral-50 rounded-lg">
+                    <img 
+                      src={product.cover_url} 
+                      alt={product.title}
+                      className="w-16 h-16 rounded-lg object-cover"
+                    />
+                    <div className="flex-1">
+                      <p className="font-medium">{product.title}</p>
+                      <p className="text-sm text-neutral-500">{product.artist_name}</p>
+                    </div>
+                  </div>
+                  {bundleCheckout.products.map(p => (
+                    <div key={p.id} className="flex items-center gap-4 p-4 bg-neutral-50 rounded-lg">
+                      <img 
+                        src={p.cover_url} 
+                        alt={p.title}
+                        className="w-16 h-16 rounded-lg object-cover"
+                      />
+                      <div className="flex-1">
+                        <p className="font-medium">{p.title}</p>
+                        <p className="text-sm text-neutral-500">{p.artist_name}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <span className="font-medium">Bundle Total</span>
+                  <div className="text-right">
+                    <p className="text-xl font-bold">${(bundleCheckout.price / 100).toFixed(2)}</p>
+                    <p className="text-sm text-green-600">Save {product.bundle_discount_percent}%</p>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center gap-4 p-4 bg-neutral-50 rounded-lg">
+                <img 
+                  src={product.cover_url} 
+                  alt={product.title}
+                  className="w-16 h-16 rounded-lg object-cover"
+                />
+                <div>
+                  <p className="font-medium">{product.title}</p>
+                  <p className="text-sm text-neutral-500">{product.artist_name}</p>
+                </div>
+                <div className="ml-auto font-bold">
+                  ${(actualPrice / 100).toFixed(2)}
+                </div>
               </div>
-              <div className="ml-auto font-bold">
-                ${(product.price_cents / 100).toFixed(2)}
-              </div>
-            </div>
+            )}
             
             <Input
               type="email"

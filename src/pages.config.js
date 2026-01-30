@@ -60,6 +60,8 @@ import Home from './pages/Home';
 import Library from './pages/Library';
 import LibraryAccess from './pages/LibraryAccess';
 import ProductPage from './pages/ProductPage';
+import DashboardAnalytics from './pages/DashboardAnalytics';
+import DashboardStripe from './pages/DashboardStripe';
 import __Layout from './Layout.jsx';
 
 
@@ -77,6 +79,8 @@ export const PAGES = {
     "Library": Library,
     "LibraryAccess": LibraryAccess,
     "ProductPage": ProductPage,
+    "DashboardAnalytics": DashboardAnalytics,
+    "DashboardStripe": DashboardStripe,
 }
 
 export const pagesConfig = {
