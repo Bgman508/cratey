@@ -171,7 +171,7 @@ export default function ProductPage() {
         });
       }
 
-      // Send styled email
+      // Send styled email (silently fail if user not in app)
       const productListHtml = productsToPurchase.map(p => 
         `<li style="margin-bottom: 8px;"><strong>${p.title}</strong></li>`
       ).join('');
@@ -191,28 +191,33 @@ export default function ProductPage() {
 
       const libraryUrl = `${window.location.origin}/Library?email=${encodeURIComponent(buyerEmail)}`;
       
-      await base44.functions.invoke('sendStyledEmail', {
-        to: buyerEmail,
-        subject: bundleCheckout ? `🎵 You own ${productsToPurchase.length} releases!` : `🎵 You own "${product.title}"`,
-        title: bundleCheckout ? `${productsToPurchase.length} New Releases in Your Crate!` : 'Thank You for Your Purchase!',
-        bodyContent: `
-          <p>Thanks for your purchase! You now own:</p>
-          <ul style="margin: 16px 0; padding-left: 20px;">
-            ${productListHtml}
-          </ul>
-          ${bundleNote}
-          <p>You can download your music anytime. No expiration, no limits.</p>
-          ${thankYouNote}
-        `,
-        ctaText: 'Download Now',
-        ctaUrl: libraryUrl
-      });
+      try {
+        await base44.functions.invoke('sendStyledEmail', {
+          to: buyerEmail,
+          subject: bundleCheckout ? `🎵 You own ${productsToPurchase.length} releases!` : `🎵 You own "${product.title}"`,
+          title: bundleCheckout ? `${productsToPurchase.length} New Releases in Your Crate!` : 'Thank You for Your Purchase!',
+          bodyContent: `
+            <p>Thanks for your purchase! You now own:</p>
+            <ul style="margin: 16px 0; padding-left: 20px;">
+              ${productListHtml}
+            </ul>
+            ${bundleNote}
+            <p>You can download your music anytime. No expiration, no limits.</p>
+            ${thankYouNote}
+          `,
+          ctaText: 'Download Now',
+          ctaUrl: libraryUrl
+        });
+      } catch (emailError) {
+        console.warn('Email send failed (user may not be registered):', emailError);
+        // Continue anyway - user can still access via library URL
+      }
 
       setCheckoutLoading(false);
       setShowCheckout(false);
       setPurchaseComplete(true);
       setUserOwnsThis(true);
-      toast.success('Purchase complete! Check your email.');
+      toast.success('🎉 Purchase complete! Access your music in the library below.');
     } catch (error) {
       console.error('Checkout error:', error);
       toast.error('Purchase failed. Please try again.');

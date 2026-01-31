@@ -52,6 +52,7 @@ import ArtistStorefront from './pages/ArtistStorefront';
 import Artists from './pages/Artists';
 import Dashboard from './pages/Dashboard';
 import DashboardAnalytics from './pages/DashboardAnalytics';
+import DashboardEditProduct from './pages/DashboardEditProduct';
 import DashboardNewProduct from './pages/DashboardNewProduct';
 import DashboardOrders from './pages/DashboardOrders';
 import DashboardPayouts from './pages/DashboardPayouts';
@@ -62,7 +63,6 @@ import Home from './pages/Home';
 import Library from './pages/Library';
 import LibraryAccess from './pages/LibraryAccess';
 import ProductPage from './pages/ProductPage';
-import DashboardEditProduct from './pages/DashboardEditProduct';
 import __Layout from './Layout.jsx';
 
 
@@ -72,6 +72,7 @@ export const PAGES = {
     "Artists": Artists,
     "Dashboard": Dashboard,
     "DashboardAnalytics": DashboardAnalytics,
+    "DashboardEditProduct": DashboardEditProduct,
     "DashboardNewProduct": DashboardNewProduct,
     "DashboardOrders": DashboardOrders,
     "DashboardPayouts": DashboardPayouts,
@@ -82,7 +83,6 @@ export const PAGES = {
     "Library": Library,
     "LibraryAccess": LibraryAccess,
     "ProductPage": ProductPage,
-    "DashboardEditProduct": DashboardEditProduct,
 }
 
 export const pagesConfig = {
