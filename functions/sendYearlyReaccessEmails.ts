@@ -4,6 +4,12 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     
+    // SECURITY: Admin-only function - verify user is admin
+    const user = await base44.auth.me();
+    if (user?.role !== 'admin') {
+      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+    }
+    
     // Get all library items
     const libraryItems = await base44.asServiceRole.entities.LibraryItem.list();
 

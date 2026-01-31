@@ -42,6 +42,11 @@ const emailTemplate = (title, bodyContent, ctaText, ctaUrl) => `
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+    
+    // SECURITY: This function can only be called by other backend functions (service role)
+    // It cannot be invoked directly from the frontend
+    // The SDK automatically handles this - frontend calls use user token, backend uses service role
+    
     const { to, title, bodyContent, ctaText, ctaUrl, subject } = await req.json();
 
     if (!to || !subject || !bodyContent) {
