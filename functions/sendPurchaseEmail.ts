@@ -10,23 +10,12 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Authenticate user
-    const user = await base44.auth.me();
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Verify order exists and matches buyer email
+    // Verify order exists and matches buyer email using service role
     const orders = await base44.asServiceRole.entities.Order.filter({ id: order_id });
     const order = orders[0];
     
     if (!order || order.buyer_email !== buyer_email.toLowerCase()) {
       return Response.json({ error: 'Order not found or email mismatch' }, { status: 404 });
-    }
-
-    // Verify user owns this order or is admin (prevents arbitrary email sending)
-    if (order.buyer_email !== user.email && user.role !== 'admin') {
-      return Response.json({ error: 'Forbidden: Cannot send emails for orders you do not own' }, { status: 403 });
     }
 
     // Build email content

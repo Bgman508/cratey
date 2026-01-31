@@ -280,9 +280,12 @@ function LibraryItemCard({ item }) {
     window.open(url, '_blank');
     
     // Increment download count via secure backend function
-    if (order) {
+    if (order && item.buyer_email) {
       try {
-        await base44.functions.invoke('incrementDownloadCount', { order_id: order.id });
+        await base44.functions.invoke('incrementDownloadCount', { 
+          order_id: order.id,
+          buyer_email: item.buyer_email
+        });
       } catch (e) {
         console.warn('Failed to track download:', e);
       }

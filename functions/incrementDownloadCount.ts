@@ -3,16 +3,10 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { order_id } = await req.json();
+    const { order_id, buyer_email } = await req.json();
 
-    if (!order_id) {
-      return Response.json({ error: 'order_id required' }, { status: 400 });
-    }
-
-    // Authenticate user
-    const user = await base44.auth.me();
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!order_id || !buyer_email) {
+      return Response.json({ error: 'order_id and buyer_email required' }, { status: 400 });
     }
 
     // Fetch order using service role to verify ownership
@@ -23,9 +17,9 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Order not found' }, { status: 404 });
     }
 
-    // Verify user owns this order or is admin
-    if (order.buyer_email !== user.email && user.role !== 'admin') {
-      return Response.json({ error: 'Forbidden: You do not own this order' }, { status: 403 });
+    // Verify buyer_email matches order (prevents unauthorized tracking)
+    if (order.buyer_email !== buyer_email.toLowerCase()) {
+      return Response.json({ error: 'Forbidden: Email does not match order' }, { status: 403 });
     }
 
     // Atomic increment

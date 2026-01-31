@@ -103,6 +103,43 @@ Deno.serve(async (req) => {
         });
       }
 
+      // Send purchase confirmation email
+      try {
+        // Fetch artist for thank you note
+        const artists = await base44.asServiceRole.entities.Artist.filter({ id: productIds[0] ? (await base44.asServiceRole.entities.Product.filter({ id: productIds[0] }))[0]?.artist_id : null });
+        const artist = artists[0];
+
+        // Build product list
+        const productsList = [];
+        for (const pid of productIds) {
+          const products = await base44.asServiceRole.entities.Product.filter({ id: pid });
+          if (products[0]) {
+            productsList.push({
+              title: products[0].title,
+              artist_name: products[0].artist_name
+            });
+          }
+        }
+
+        // Get the first order ID for this session
+        const firstOrder = await base44.asServiceRole.entities.Order.filter({ 
+          stripe_session_id: session.id 
+        }, '-created_date', 1);
+
+        if (firstOrder[0]) {
+          await base44.asServiceRole.functions.invoke('sendPurchaseEmail', {
+            buyer_email: buyer_email,
+            order_id: firstOrder[0].id,
+            products: productsList,
+            is_bundle: is_bundle === 'true',
+            thank_you_note: artist?.thank_you_note || null
+          });
+        }
+      } catch (emailError) {
+        console.warn('Purchase email failed:', emailError);
+        // Don't fail webhook if email fails
+      }
+
       return Response.json({ received: true });
     }
 
