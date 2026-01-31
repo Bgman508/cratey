@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowLeft, Upload, X, Music, Loader2, Plus } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import BundleSelector from '@/components/products/BundleSelector';
+import AutoPreviewNote from '@/components/products/AutoPreviewNote';
 import { toast } from 'sonner';
 
 export default function DashboardNewProduct() {
@@ -562,6 +563,7 @@ export default function DashboardNewProduct() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
+                <AutoPreviewNote />
                 {previewFiles.length > 0 && (
                   <div className="text-sm text-neutral-600">
                     {previewFiles.length} preview file{previewFiles.length !== 1 ? 's' : ''} uploaded

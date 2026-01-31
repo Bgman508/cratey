@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import OwnershipCertificate from '@/components/library/OwnershipCertificate';
 import TrackList from '@/components/audio/TrackList';
 import { toast } from 'sonner';
+import { saveLibraryAccess, getLibraryAccess, clearLibraryAccess, hasLibraryAccess } from '@/components/library/PersistentAccess';
 
 export default function Library() {
   const urlParams = new URLSearchParams(window.location.search);

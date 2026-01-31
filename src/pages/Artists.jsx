@@ -7,6 +7,7 @@ import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import ArtistCard from '@/components/artists/ArtistCard';
+import { fuzzyFilter } from '@/components/search/FuzzySearch';
 
 export default function Artists() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -16,9 +17,9 @@ export default function Artists() {
     queryFn: () => base44.entities.Artist.list('-created_date')
   });
 
-  const filteredArtists = artists.filter(a =>
-    !searchQuery || a.name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredArtists = searchQuery 
+    ? fuzzyFilter(artists, searchQuery, ['name', 'bio'])
+    : artists;
 
   return (
     <div className="min-h-screen">

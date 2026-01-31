@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import ProductCard from '@/components/products/ProductCard';
 import ArtistCard from '@/components/artists/ArtistCard';
+import { fuzzyFilter } from '@/components/search/FuzzySearch';
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -46,16 +47,9 @@ export default function Home() {
     queryFn: () => base44.entities.Artist.list('-created_date', 8)
   });
 
-  const filteredProducts = products.filter(p => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      p.title?.toLowerCase().includes(query) ||
-      p.artist_name?.toLowerCase().includes(query) ||
-      p.type?.toLowerCase().includes(query) ||
-      p.description?.toLowerCase().includes(query)
-    );
-  });
+  const filteredProducts = searchQuery 
+    ? fuzzyFilter(products, searchQuery, ['title', 'artist_name', 'type', 'description'])
+    : products;
 
   const featuredProduct = products.find(p => p.status === 'live');
 
