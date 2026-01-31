@@ -16,6 +16,14 @@ export default function TrackList({
     setCurrentTrackIndex(index === currentTrackIndex ? null : index);
   };
 
+  if (!tracks || tracks.length === 0) {
+    return (
+      <div className="bg-neutral-100 rounded-lg p-4 text-center">
+        <p className="text-sm text-neutral-600">No audio tracks available</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-2">
       {tracks.map((url, index) => (

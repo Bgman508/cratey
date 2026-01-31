@@ -15,7 +15,8 @@ export default function ProductCard({ product, showArtist = true, isOwned = fals
     e.preventDefault();
     e.stopPropagation();
     
-    if (!product.preview_url) return;
+    const previewUrl = product.preview_urls?.[0] || product.audio_urls?.[0];
+    if (!previewUrl) return;
     
     if (isPlaying) {
       audioRef.current?.pause();
@@ -43,7 +44,7 @@ export default function ProductCard({ product, showArtist = true, isOwned = fals
         />
         
         {/* Preview Button Overlay */}
-        {product.preview_url && (
+        {(product.preview_urls?.[0] || product.audio_urls?.[0]) && (
           <button
             onClick={handlePreviewToggle}
             className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-colors"
@@ -95,10 +96,10 @@ export default function ProductCard({ product, showArtist = true, isOwned = fals
         )}
       </div>
 
-      {product.preview_url && (
+      {(product.preview_urls?.[0] || product.audio_urls?.[0]) && (
         <audio 
           ref={audioRef}
-          src={product.preview_url}
+          src={product.preview_urls?.[0] || product.audio_urls?.[0]}
           onEnded={handleAudioEnded}
           className="hidden"
         />
