@@ -14,6 +14,7 @@ import { ArrowLeft, Upload, X, Music, Loader2, Plus } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import BundleSelector from '@/components/products/BundleSelector';
 import AutoPreviewNote from '@/components/products/AutoPreviewNote';
+import { generatePreviewFromAudio } from '@/components/audio/AudioPreviewGenerator';
 import { toast } from 'sonner';
 
 export default function DashboardNewProduct() {
@@ -163,6 +164,8 @@ export default function DashboardNewProduct() {
     let previewUrls = [];
     if (previewFiles.length > 0) {
       // User uploaded custom previews
+      toast.dismiss();
+      toast.loading('Uploading custom previews...');
       for (const preview of previewFiles) {
         try {
           const { file_url } = await base44.integrations.Core.UploadFile({ file: preview });
@@ -175,8 +178,23 @@ export default function DashboardNewProduct() {
         }
       }
     } else {
-      // Use full tracks as previews (preview generation happens in background)
-      previewUrls = audioUrls;
+      // Auto-generate 30-second previews
+      toast.dismiss();
+      toast.loading('Generating 30-second preview clips...');
+      try {
+        for (let i = 0; i < audioFiles.length; i++) {
+          toast.dismiss();
+          toast.loading(`Generating preview ${i + 1}/${audioFiles.length}...`);
+          const previewFile = await generatePreviewFromAudio(audioFiles[i].file, 30);
+          const { file_url } = await base44.integrations.Core.UploadFile({ file: previewFile });
+          previewUrls.push(file_url);
+        }
+      } catch (e) {
+        console.error('Failed to generate previews:', e);
+        toast.dismiss();
+        toast.error('Failed to generate previews. Using full tracks.');
+        previewUrls = audioUrls;
+      }
     }
 
     // Prepare edition and drop window data
