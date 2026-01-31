@@ -114,12 +114,16 @@ export default function DashboardSettings() {
       return;
     }
 
-    // Check slug availability
-    if (!artist || artist.slug !== formData.slug) {
+    // Check slug availability (only if slug changed)
+    if (!artist || (artist.slug !== formData.slug)) {
       const existing = await base44.entities.Artist.filter({ slug: formData.slug });
-      if (existing.length > 0 && existing[0].id !== artist?.id) {
-        toast.error('This URL is already taken');
-        return;
+      if (existing.length > 0) {
+        const existingArtist = existing[0];
+        if (!artist || existingArtist.id !== artist.id) {
+          toast.error('This URL is already taken');
+          setSaving(false);
+          return;
+        }
       }
     }
 

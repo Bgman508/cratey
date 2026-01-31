@@ -30,6 +30,14 @@ export default function Home() {
     }
   }, []);
 
+  // Cleanup audio on unmount
+  useEffect(() => {
+    return () => {
+      const audioElements = document.querySelectorAll('audio');
+      audioElements.forEach(audio => audio.pause());
+    };
+  }, []);
+
   // Fetch owned products
   useQuery({
     queryKey: ['owned-products', userEmail],

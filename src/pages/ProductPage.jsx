@@ -318,14 +318,14 @@ Enjoy!
               )}
 
               {/* Drop Window */}
-              {product.drop_window_enabled && !userOwnsThis && (
+              {product.drop_window_enabled && !userOwnsThis && !purchaseComplete && (
                 <div className="mt-6">
                   <DropWindowCountdown product={product} />
                 </div>
               )}
 
               {/* Edition Info */}
-              {product.edition_type === 'limited' && !userOwnsThis && (
+              {product.edition_type === 'limited' && !userOwnsThis && !purchaseComplete && (
                 <div className="mt-6">
                   <EditionBadge product={product} />
                 </div>
@@ -403,14 +403,11 @@ Enjoy!
                       className="w-full bg-black text-white hover:bg-neutral-800 h-14 text-lg"
                       onClick={handleBuyClick}
                       disabled={
-                        (product.edition_type === 'limited' && product.total_sales >= product.edition_limit) ||
-                        (product.drop_window_enabled && new Date(product.drop_window_end) < new Date())
+                        (product.edition_type === 'limited' && product.total_sales >= product.edition_limit)
                       }
                     >
                       {product.edition_type === 'limited' && product.total_sales >= product.edition_limit ? (
                         'Sold Out'
-                      ) : product.drop_window_enabled && new Date(product.drop_window_end) < new Date() ? (
-                        'Drop Ended'
                       ) : (
                         'Buy Now'
                       )}

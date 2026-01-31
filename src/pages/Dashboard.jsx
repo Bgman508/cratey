@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DollarSign, Package, ShoppingCart, TrendingUp, Plus, ArrowRight } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
@@ -256,6 +257,7 @@ export default function Dashboard() {
                   variant="outline"
                   onClick={() => {
                     navigator.clipboard.writeText(`${window.location.origin}/ArtistStorefront?slug=${artist.slug}`);
+                    toast.success('Link copied!');
                   }}
                 >
                   Copy
