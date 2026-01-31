@@ -1,17 +1,34 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
+// Rate limiting: Store last request time per email
+const rateLimitMap = new Map();
+const RATE_LIMIT_MS = 60000; // 1 minute between requests per email
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const { email } = await req.json();
 
-    if (!email) {
-      return Response.json({ error: 'Email required' }, { status: 400 });
+    if (!email || !email.includes('@')) {
+      return Response.json({ error: 'Valid email required' }, { status: 400 });
     }
+
+    const emailLower = email.toLowerCase();
+
+    // Rate limiting check
+    const now = Date.now();
+    const lastRequest = rateLimitMap.get(emailLower);
+    if (lastRequest && now - lastRequest < RATE_LIMIT_MS) {
+      const waitTime = Math.ceil((RATE_LIMIT_MS - (now - lastRequest)) / 1000);
+      return Response.json({ 
+        error: `Please wait ${waitTime} seconds before requesting another link` 
+      }, { status: 429 });
+    }
+    rateLimitMap.set(emailLower, now);
 
     // Check if user has any purchases
     const items = await base44.asServiceRole.entities.LibraryItem.filter({ 
-      buyer_email: email.toLowerCase() 
+      buyer_email: emailLower 
     });
 
     if (items.length === 0) {

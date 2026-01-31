@@ -29,7 +29,8 @@ export default function Library() {
       if (tokenFromUrl && emailFromUrl) {
         setValidatingToken(true);
         try {
-          const tokens = await base44.entities.LibraryAccessToken.filter({
+          // Use service role to prevent RLS bypass attempts
+          const tokens = await base44.asServiceRole.entities.LibraryAccessToken.filter({
             token: tokenFromUrl,
             buyer_email: emailFromUrl.toLowerCase(),
             used: false
@@ -41,17 +42,26 @@ export default function Library() {
             const expiresAt = new Date(token.expires_at);
 
             if (now < expiresAt) {
-              // Mark token as used
-              await base44.entities.LibraryAccessToken.update(token.id, { used: true });
-              saveLibraryAccess(emailFromUrl);
-              setEmail(emailFromUrl);
-              setVerified(true);
-              toast.success('Access granted!');
+              // Verify user actually has library items before granting access
+              const items = await base44.entities.LibraryItem.filter({
+                buyer_email: emailFromUrl.toLowerCase()
+              });
+
+              if (items.length > 0) {
+                // Mark token as used
+                await base44.asServiceRole.entities.LibraryAccessToken.update(token.id, { used: true });
+                saveLibraryAccess(emailFromUrl);
+                setEmail(emailFromUrl);
+                setVerified(true);
+                toast.success('Access granted!');
+              } else {
+                toast.error('No purchases found for this account');
+              }
             } else {
               toast.error('Access link expired. Request a new one.');
             }
           } else {
-            toast.error('Invalid access link');
+            toast.error('Invalid or already used access link');
           }
         } catch (error) {
           console.error('Token validation error:', error);
@@ -59,9 +69,21 @@ export default function Library() {
         }
         setValidatingToken(false);
       } else if (emailFromUrl && hasLibraryAccess(emailFromUrl)) {
-        // User has persistent access
-        setEmail(emailFromUrl);
-        setVerified(true);
+        // User has persistent access - still verify they have items
+        try {
+          const items = await base44.entities.LibraryItem.filter({
+            buyer_email: emailFromUrl.toLowerCase()
+          });
+          if (items.length > 0) {
+            setEmail(emailFromUrl);
+            setVerified(true);
+          } else {
+            clearLibraryAccess();
+            toast.error('No purchases found');
+          }
+        } catch (error) {
+          console.error('Verification error:', error);
+        }
       }
     };
 
@@ -96,14 +118,29 @@ export default function Library() {
     }
   };
 
-  const handleDirectAccess = () => {
+  const handleDirectAccess = async () => {
     if (!email || !email.includes('@')) {
       toast.error('Please enter a valid email address');
       return;
     }
-    saveLibraryAccess(email);
-    setVerified(true);
-    refetch();
+
+    // Verify user has purchases before allowing direct access
+    try {
+      const items = await base44.entities.LibraryItem.filter({ 
+        buyer_email: email.toLowerCase() 
+      });
+      
+      if (items.length > 0) {
+        saveLibraryAccess(email);
+        setVerified(true);
+        refetch();
+      } else {
+        toast.error('No purchases found for this email. Please check your email or make a purchase first.');
+      }
+    } catch (error) {
+      console.error('Access verification error:', error);
+      toast.error('Failed to verify access. Please try again.');
+    }
   };
 
   if (validatingToken) {

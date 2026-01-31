@@ -204,14 +204,14 @@ export default function ProductPage() {
         buyer_email: buyerEmail.toLowerCase() 
       }, '-created_date', 1);
 
-      // Send purchase confirmation email
+      // Send purchase confirmation email (uses service role, no auth needed)
       try {
         const productList = productsToPurchase.map(p => ({
           title: p.title,
           artist_name: p.artist_name
         }));
 
-        await base44.functions.invoke('sendPurchaseEmail', {
+        await base44.asServiceRole.functions.invoke('sendPurchaseEmail', {
           buyer_email: buyerEmail.toLowerCase(),
           order_id: latestOrder[0]?.id,
           products: productList,
@@ -227,7 +227,7 @@ export default function ProductPage() {
       setShowCheckout(false);
       setPurchaseComplete(true);
       setUserOwnsThis(true);
-      toast.success('🎉 Purchase complete! Access your music in the library below.');
+      toast.success('🎉 Purchase complete! Check your email for the download link!');
     } catch (error) {
       console.error('Checkout error:', error);
       toast.error('Purchase failed. Please try again.');
