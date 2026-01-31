@@ -28,6 +28,8 @@ export default function DashboardNewProduct() {
   const [formData, setFormData] = useState({
     title: '',
     type: 'single',
+    genre: '',
+    tags: [],
     description: '',
     price: '',
     archive_price: '',
@@ -189,6 +191,8 @@ export default function DashboardNewProduct() {
       artist_slug: artist.slug,
       title: formData.title,
       type: formData.type,
+      genre: formData.genre || null,
+      tags: formData.tags || [],
       description: formData.description,
       price_cents: Math.round(parseFloat(formData.price) * 100),
       currency: 'USD',
@@ -197,6 +201,7 @@ export default function DashboardNewProduct() {
       preview_urls: previewUrls,
       track_names: formData.track_names,
       status: publish ? 'live' : 'draft',
+      release_date: new Date().toISOString().split('T')[0],
       ...editionData,
       ...dropWindowData,
       ...bundleData
@@ -310,6 +315,29 @@ export default function DashboardNewProduct() {
                       <SelectItem value="album">Album</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="genre">Genre (optional)</Label>
+                  <Input
+                    id="genre"
+                    value={formData.genre}
+                    onChange={(e) => setFormData({ ...formData, genre: e.target.value })}
+                    placeholder="e.g., Indie Rock"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="tags">Tags (comma-separated)</Label>
+                  <Input
+                    id="tags"
+                    value={formData.tags.join(', ')}
+                    onChange={(e) => setFormData({ ...formData, tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean) })}
+                    placeholder="ambient, experimental"
+                    className="mt-1"
+                  />
                 </div>
               </div>
               

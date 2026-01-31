@@ -56,7 +56,7 @@ export default function Home() {
   });
 
   const filteredProducts = searchQuery 
-    ? fuzzyFilter(products, searchQuery, ['title', 'artist_name', 'type', 'description'])
+    ? fuzzyFilter(products, searchQuery, ['title', 'artist_name', 'type', 'description', 'genre', 'tags'])
     : products;
 
   const featuredProduct = products.find(p => p.status === 'live');

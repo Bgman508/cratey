@@ -4,6 +4,7 @@ import { createPageUrl } from './utils';
 import { ShoppingBag, Music, User, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import GlobalAudioStop from '@/components/audio/GlobalAudioStop';
 
 export default function Layout({ children, currentPageName }) {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
@@ -12,18 +13,29 @@ export default function Layout({ children, currentPageName }) {
   const noLayoutPages = ['ArtistStorefront', 'ProductPage', 'LibraryAccess'];
   
   if (noLayoutPages.includes(currentPageName)) {
-    return <>{children}</>;
+    return (
+      <>
+        <GlobalAudioStop />
+        {children}
+      </>
+    );
   }
   
   // Dashboard pages have their own layout
-  const dashboardPages = ['Dashboard', 'DashboardProducts', 'DashboardNewProduct', 'DashboardOrders', 'DashboardPayouts', 'DashboardSettings'];
+  const dashboardPages = ['Dashboard', 'DashboardProducts', 'DashboardNewProduct', 'DashboardEditProduct', 'DashboardOrders', 'DashboardPayouts', 'DashboardSettings', 'DashboardAnalytics', 'DashboardStripe'];
   
   if (dashboardPages.includes(currentPageName)) {
-    return <>{children}</>;
+    return (
+      <>
+        <GlobalAudioStop />
+        {children}
+      </>
+    );
   }
 
   return (
     <div className="min-h-screen bg-white">
+      <GlobalAudioStop />
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-neutral-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

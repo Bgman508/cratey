@@ -45,9 +45,17 @@ export const fuzzyFilter = (items, query, searchFields = ['title', 'name']) => {
   
   return items
     .map(item => {
-      const scores = searchFields.map(field => 
-        getMatchScore(item[field], query)
-      );
+      const scores = searchFields.map(field => {
+        const value = item[field];
+        
+        // Handle array fields (like tags)
+        if (Array.isArray(value)) {
+          const arrayScores = value.map(v => getMatchScore(v, query));
+          return Math.max(...arrayScores, 0);
+        }
+        
+        return getMatchScore(value, query);
+      });
       const maxScore = Math.max(...scores, 0);
       
       return { item, score: maxScore };
