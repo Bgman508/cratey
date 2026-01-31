@@ -34,35 +34,37 @@ export default function Library() {
       return;
     }
 
-    // Check if user has any purchases
-    const items = await base44.entities.LibraryItem.filter({ buyer_email: email.toLowerCase() });
-    
-    if (items.length === 0) {
-      toast.error('No purchases found for this email');
-      return;
-    }
-
-    // Send magic link email
     setSendingLink(true);
     
-    await base44.integrations.Core.SendEmail({
-      to: email,
-      subject: '🎵 Access Your CRATEY Library',
-      body: `
-Hi there!
+    try {
+      const items = await base44.entities.LibraryItem.filter({ buyer_email: email.toLowerCase() });
+      
+      if (items.length === 0) {
+        toast.error('No purchases found for this email');
+        setSendingLink(false);
+        return;
+      }
 
-Click the link below to access your music library:
-${window.location.origin}/Library?email=${encodeURIComponent(email)}
+      const accessUrl = `${window.location.origin}${createPageUrl('Library')}?email=${encodeURIComponent(email)}`;
+      
+      await base44.functions.invoke('sendStyledEmail', {
+        to: email,
+        subject: '🎵 Access Your CRATEY Library',
+        title: 'Your Music Library',
+        bodyContent: `
+          <p>You have <strong>${items.length} item${items.length !== 1 ? 's' : ''}</strong> in your crate.</p>
+          <p>Click below to access all your CRATEY purchases. Download anytime, anywhere.</p>
+        `,
+        ctaText: 'Open My Library',
+        ctaUrl: accessUrl
+      });
 
-You have ${items.length} item(s) in your crate.
-
-Happy listening!
-— The CRATEY Team
-      `.trim()
-    });
-
-    setSendingLink(false);
-    toast.success('Access link sent! Check your email.');
+      setSendingLink(false);
+      toast.success('Access link sent! Check your email.');
+    } catch (error) {
+      setSendingLink(false);
+      toast.error('Failed to send link');
+    }
   };
 
   const handleDirectAccess = () => {
@@ -70,6 +72,7 @@ Happy listening!
       toast.error('Please enter a valid email address');
       return;
     }
+    saveLibraryAccess(email);
     setVerified(true);
     refetch();
   };
@@ -155,16 +158,30 @@ Happy listening!
             <h1 className="text-3xl font-bold">Your Crate</h1>
             <p className="text-neutral-600 mt-1">{email}</p>
           </div>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => {
-              setVerified(false);
-              setEmail('');
-            }}
-          >
-            Switch Account
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => {
+                clearLibraryAccess();
+                setVerified(false);
+                setEmail('');
+                toast.success('Signed out');
+              }}
+            >
+              Sign Out
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => {
+                setVerified(false);
+                setEmail('');
+              }}
+            >
+              Switch Account
+            </Button>
+          </div>
         </div>
 
         {/* Library Items */}
