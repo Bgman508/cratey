@@ -202,31 +202,37 @@ export default function DashboardNewProduct() {
     } : {};
 
     // Create product
-    const product = await base44.entities.Product.create({
-      artist_id: artist.id,
-      artist_name: artist.name,
-      artist_slug: artist.slug,
-      title: formData.title,
-      type: formData.type,
-      genre: formData.genre || null,
-      tags: formData.tags || [],
-      description: formData.description,
-      price_cents: Math.round(parseFloat(formData.price) * 100),
-      currency: 'USD',
-      cover_url: coverUrl,
-      audio_urls: audioUrls,
-      preview_urls: previewUrls,
-      track_names: formData.track_names,
-      status: publish ? 'live' : 'draft',
-      release_date: new Date().toISOString().split('T')[0],
-      ...editionData,
-      ...dropWindowData,
-      ...bundleData
-    });
+    try {
+      const product = await base44.entities.Product.create({
+        artist_id: artist.id,
+        artist_name: artist.name,
+        artist_slug: artist.slug,
+        title: formData.title,
+        type: formData.type,
+        genre: formData.genre || null,
+        tags: formData.tags || [],
+        description: formData.description,
+        price_cents: Math.round(parseFloat(formData.price) * 100),
+        currency: 'USD',
+        cover_url: coverUrl,
+        audio_urls: audioUrls,
+        preview_urls: previewUrls,
+        track_names: formData.track_names,
+        status: publish ? 'live' : 'draft',
+        release_date: new Date().toISOString().split('T')[0],
+        ...editionData,
+        ...dropWindowData,
+        ...bundleData
+      });
 
-    setUploading(false);
-    toast.success(publish ? 'Product published!' : 'Draft saved');
-    navigate(createPageUrl('DashboardProducts'));
+      setUploading(false);
+      toast.success(publish ? 'Product published!' : 'Draft saved');
+      navigate(createPageUrl('DashboardProducts'));
+    } catch (e) {
+      console.error('Failed to create product:', e);
+      toast.error('Failed to create product: ' + (e.message || 'Unknown error'));
+      setUploading(false);
+    }
   };
 
   if (!artist) {
