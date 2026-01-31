@@ -17,18 +17,24 @@ import {
 } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
-const navItems = [
-  { name: 'Dashboard', icon: LayoutDashboard, page: 'Dashboard' },
-  { name: 'Products', icon: Package, page: 'DashboardProducts' },
-  { name: 'Orders', icon: ShoppingCart, page: 'DashboardOrders' },
-  { name: 'Analytics', icon: BarChart3, page: 'DashboardAnalytics' },
-  { name: 'Payouts', icon: CreditCard, page: 'DashboardPayouts' },
-  { name: 'Settings', icon: Settings, page: 'DashboardSettings' },
-];
-
 export default function DashboardLayout({ children, currentPage, artist }) {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const [user, setUser] = React.useState(null);
   const navigate = useNavigate();
+
+  React.useEffect(() => {
+    base44.auth.me().then(setUser).catch(() => {});
+  }, []);
+
+  const navItems = [
+    { name: 'Dashboard', icon: LayoutDashboard, page: 'Dashboard' },
+    { name: 'Products', icon: Package, page: 'DashboardProducts' },
+    { name: 'Orders', icon: ShoppingCart, page: 'DashboardOrders' },
+    { name: 'Analytics', icon: BarChart3, page: 'DashboardAnalytics' },
+    { name: 'Payouts', icon: CreditCard, page: 'DashboardPayouts' },
+    { name: 'Settings', icon: Settings, page: 'DashboardSettings' },
+    ...(user?.role === 'admin' ? [{ name: 'Admin', icon: Settings, page: 'AdminOrders' }] : [])
+  ];
 
   const handleLogout = () => {
     base44.auth.logout();
