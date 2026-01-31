@@ -107,36 +107,26 @@ export default function DashboardNewProduct() {
   };
 
   const handleSubmit = async (publish = false) => {
-    console.log('Submit clicked, validating...', { 
-      title: formData.title, 
-      price: formData.price, 
-      coverFile: !!coverFile, 
-      audioFiles: audioFiles.length 
-    });
-    
+    // Basic validation
     if (!formData.title) {
-      console.error('Validation failed: no title');
       toast.error('Please enter a title');
       return;
     }
     if (!formData.price || parseFloat(formData.price) <= 0) {
-      console.error('Validation failed: invalid price', formData.price);
       toast.error('Please enter a valid price');
       return;
     }
     if (!coverFile) {
-      console.error('Validation failed: no cover');
       toast.error('Please upload cover art');
       return;
     }
     if (audioFiles.length === 0) {
-      console.error('Validation failed: no audio files');
       toast.error('Please upload at least one audio file');
       return;
     }
 
-    console.log('Validation passed, starting upload...');
     setUploading(true);
+    toast.loading('Uploading files...');
 
     // Upload cover
     let coverUrl = '';
