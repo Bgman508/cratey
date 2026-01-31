@@ -136,7 +136,11 @@ export default function DashboardPayouts() {
                         </p>
                       </div>
                     </div>
-                    <Button className="bg-black text-white hover:bg-neutral-800">
+                    <Button 
+                      className="bg-black text-white hover:bg-neutral-800"
+                      disabled
+                      title="Stripe integration not yet implemented"
+                    >
                       Connect Stripe
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>

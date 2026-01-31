@@ -94,7 +94,11 @@ export default function DashboardStripe() {
             </div>
 
             {!isConnected && (
-              <Button className="w-full bg-[#635BFF] hover:bg-[#4F46E5] text-white">
+              <Button 
+                className="w-full bg-[#635BFF] hover:bg-[#4F46E5] text-white"
+                disabled
+                title="Stripe integration not yet implemented"
+              >
                 <ExternalLink className="w-4 h-4 mr-2" />
                 Connect with Stripe
               </Button>
@@ -105,17 +109,23 @@ export default function DashboardStripe() {
                 <p className="text-sm text-neutral-600 mb-2">
                   Account ID: <code className="bg-neutral-100 px-2 py-1 rounded">{artist.stripe_account_id}</code>
                 </p>
-                <Button variant="outline" className="w-full">
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  disabled
+                  title="Stripe integration not yet implemented"
+                >
                   <ExternalLink className="w-4 h-4 mr-2" />
                   Manage in Stripe Dashboard
                 </Button>
               </div>
             )}
 
-            <p className="text-xs text-neutral-500 pt-4">
-              Note: Stripe Connect integration requires backend functions to be enabled. 
-              This is a placeholder UI showing how payment setup would work.
-            </p>
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-4">
+              <p className="text-xs text-amber-800">
+                ⚠️ <strong>Stripe Connect Not Yet Implemented:</strong> Real payment processing requires Stripe API integration. Contact platform admin to enable payments.
+              </p>
+            </div>
           </CardContent>
         </Card>
       </div>
