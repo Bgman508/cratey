@@ -3,6 +3,11 @@
 
 export async function generatePreviewFromAudio(audioFile, durationSeconds = 30) {
   return new Promise((resolve, reject) => {
+    if (!window.AudioContext && !window.webkitAudioContext) {
+      reject(new Error('Web Audio API not supported'));
+      return;
+    }
+    
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
     const reader = new FileReader();
 

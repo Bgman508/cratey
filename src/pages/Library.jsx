@@ -312,7 +312,10 @@ function LibraryItemCard({ item }) {
                     onDownload={(track) => handleDownload(track.url, track.name)}
                   />
                 ) : (
-                  <p className="text-sm text-neutral-400">Download files will be available soon</p>
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <p className="text-sm text-yellow-800 font-medium mb-2">⚠️ Audio Files Processing</p>
+                    <p className="text-sm text-yellow-700">Your purchase is confirmed. Audio files are being processed and will be available shortly. Check back in a few minutes or contact support if this persists.</p>
+                  </div>
                 )}
               </div>
             </div>

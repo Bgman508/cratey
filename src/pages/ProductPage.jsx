@@ -354,15 +354,21 @@ export default function ProductPage() {
                   <h3 className="text-sm font-medium text-neutral-500 uppercase tracking-wider mb-4">
                     {userOwnsThis ? 'Play Full Tracks' : 'Preview Tracks'}
                   </h3>
-                  <TrackList
-                    tracks={userOwnsThis 
-                      ? product.audio_urls 
-                      : (product.preview_urls || product.audio_urls)
-                    }
-                    trackNames={product.track_names}
-                    isPreview={!userOwnsThis}
-                    onBuyClick={() => setShowCheckout(true)}
-                  />
+                  {(userOwnsThis ? product.audio_urls : (product.preview_urls || product.audio_urls))?.length > 0 ? (
+                    <TrackList
+                      tracks={userOwnsThis 
+                        ? product.audio_urls 
+                        : (product.preview_urls || product.audio_urls)
+                      }
+                      trackNames={product.track_names}
+                      isPreview={!userOwnsThis}
+                      onBuyClick={() => setShowCheckout(true)}
+                    />
+                  ) : (
+                    <div className="bg-neutral-100 rounded-lg p-4">
+                      <p className="text-sm text-neutral-600">Audio previews coming soon</p>
+                    </div>
+                  )}
                 </div>
               )}
 
