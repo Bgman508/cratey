@@ -150,16 +150,33 @@ export default function DashboardNewProduct() {
       }
     }
 
-    // Upload preview files
-    const previewUrls = [];
-    for (const preview of previewFiles) {
+    // Generate or upload preview files
+    let previewUrls = [];
+    if (previewFiles.length > 0) {
+      // User uploaded custom previews
+      for (const preview of previewFiles) {
+        try {
+          const { file_url } = await base44.integrations.Core.UploadFile({ file: preview });
+          previewUrls.push(file_url);
+        } catch (e) {
+          toast.error(`Failed to upload preview`);
+          setUploading(false);
+          return;
+        }
+      }
+    } else {
+      // Auto-generate previews from full tracks (first 30 seconds)
+      toast.info('Generating preview clips...');
       try {
-        const { file_url } = await base44.integrations.Core.UploadFile({ file: preview });
-        previewUrls.push(file_url);
+        const { preview_urls } = await base44.functions.invoke('generateAudioPreviews', {
+          audio_urls: audioUrls
+        });
+        previewUrls = preview_urls.filter(url => url !== null);
       } catch (e) {
-        toast.error(`Failed to upload preview`);
-        setUploading(false);
-        return;
+        console.error('Failed to auto-generate previews:', e);
+        // Fall back to using full tracks as previews
+        previewUrls = audioUrls;
+        toast.info('Using full tracks as previews');
       }
     }
 
@@ -586,15 +603,15 @@ export default function DashboardNewProduct() {
           {/* Preview Files */}
           <Card>
             <CardHeader>
-              <CardTitle>Preview Files (30-60s)</CardTitle>
-              <CardDescription>Upload short preview clips for non-buyers</CardDescription>
+              <CardTitle>Preview Files (Optional)</CardTitle>
+              <CardDescription>Custom preview clips or auto-generate from full tracks</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <AutoPreviewNote />
                 {previewFiles.length > 0 && (
                   <div className="text-sm text-neutral-600">
-                    {previewFiles.length} preview file{previewFiles.length !== 1 ? 's' : ''} uploaded
+                    ✓ {previewFiles.length} custom preview{previewFiles.length !== 1 ? 's' : ''} uploaded
                   </div>
                 )}
                 
@@ -610,12 +627,12 @@ export default function DashboardNewProduct() {
                   <Button variant="outline" className="w-full" asChild>
                     <span>
                       <Upload className="w-4 h-4 mr-2" />
-                      Upload Previews
+                      Upload Custom Previews
                     </span>
                   </Button>
                 </label>
                 <p className="text-xs text-neutral-500">
-                  Upload one preview per track (same order as full tracks)
+                  Optional: Upload custom 30-60s clips, or we'll auto-generate them from your full tracks
                 </p>
               </div>
             </CardContent>
