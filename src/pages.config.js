@@ -51,17 +51,18 @@ import ArtistSignup from './pages/ArtistSignup';
 import ArtistStorefront from './pages/ArtistStorefront';
 import Artists from './pages/Artists';
 import Dashboard from './pages/Dashboard';
+import DashboardAnalytics from './pages/DashboardAnalytics';
 import DashboardNewProduct from './pages/DashboardNewProduct';
 import DashboardOrders from './pages/DashboardOrders';
 import DashboardPayouts from './pages/DashboardPayouts';
 import DashboardProducts from './pages/DashboardProducts';
 import DashboardSettings from './pages/DashboardSettings';
+import DashboardStripe from './pages/DashboardStripe';
 import Home from './pages/Home';
 import Library from './pages/Library';
 import LibraryAccess from './pages/LibraryAccess';
 import ProductPage from './pages/ProductPage';
-import DashboardAnalytics from './pages/DashboardAnalytics';
-import DashboardStripe from './pages/DashboardStripe';
+import DashboardEditProduct from './pages/DashboardEditProduct';
 import __Layout from './Layout.jsx';
 
 
@@ -70,17 +71,18 @@ export const PAGES = {
     "ArtistStorefront": ArtistStorefront,
     "Artists": Artists,
     "Dashboard": Dashboard,
+    "DashboardAnalytics": DashboardAnalytics,
     "DashboardNewProduct": DashboardNewProduct,
     "DashboardOrders": DashboardOrders,
     "DashboardPayouts": DashboardPayouts,
     "DashboardProducts": DashboardProducts,
     "DashboardSettings": DashboardSettings,
+    "DashboardStripe": DashboardStripe,
     "Home": Home,
     "Library": Library,
     "LibraryAccess": LibraryAccess,
     "ProductPage": ProductPage,
-    "DashboardAnalytics": DashboardAnalytics,
-    "DashboardStripe": DashboardStripe,
+    "DashboardEditProduct": DashboardEditProduct,
 }
 
 export const pagesConfig = {

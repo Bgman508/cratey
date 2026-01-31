@@ -154,6 +154,10 @@ export default function DashboardProducts() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => window.location.href = createPageUrl('DashboardEditProduct') + `?id=${product.id}`}>
+                            <Pencil className="w-4 h-4 mr-2" />
+                            Edit
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => toggleStatusMutation.mutate(product)}>
                             {product.status === 'live' ? (
                               <>

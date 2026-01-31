@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
@@ -82,97 +82,109 @@ export default function ProductPage() {
 
     setCheckoutLoading(true);
 
-    // Check if already owns
-    const alreadyOwns = await checkOwnership(buyerEmail);
-    if (alreadyOwns) {
-      toast.info('You already own this! Check your library.');
-      setCheckoutLoading(false);
-      setShowCheckout(false);
-      return;
-    }
+    try {
+      // Determine products to purchase
+      const productsToPurchase = bundleCheckout 
+        ? [product, ...bundleCheckout.products] 
+        : [product];
 
-    // Check if limited edition and sold out
-    if (product.edition_type === 'limited' && product.total_sales >= product.edition_limit) {
-      toast.error('This edition is sold out!');
-      setCheckoutLoading(false);
-      setShowCheckout(false);
-      return;
-    }
+      // Check ownership for all products
+      for (const p of productsToPurchase) {
+        const items = await base44.entities.LibraryItem.filter({ 
+          buyer_email: buyerEmail.toLowerCase(), 
+          product_id: p.id 
+        });
+        if (items.length > 0) {
+          toast.info(`You already own "${p.title}"!`);
+          setCheckoutLoading(false);
+          setShowCheckout(false);
+          return;
+        }
+      }
 
-    // Check if drop window expired
-    if (product.drop_window_enabled && new Date(product.drop_window_end) < new Date()) {
-      toast.error('This drop window has ended!');
-      setCheckoutLoading(false);
-      setShowCheckout(false);
-      return;
-    }
+      // Calculate total price
+      const isDropEnded = product.drop_window_enabled && new Date(product.drop_window_end) < new Date();
+      const basePrice = isDropEnded && product.archive_price_cents 
+        ? product.archive_price_cents 
+        : product.price_cents;
+      
+      const totalPrice = bundleCheckout ? bundleCheckout.price : basePrice;
+      const platformFee = Math.round(totalPrice * 0.08);
+      const artistPayout = totalPrice - platformFee;
 
-    // Calculate edition number
-    const editionNumber = product.edition_type === 'limited' 
-      ? (product.total_sales || 0) + 1 
-      : null;
+      // Create orders and library items for each product
+      for (const p of productsToPurchase) {
+        // Check stock for limited editions
+        if (p.edition_type === 'limited' && p.total_sales >= p.edition_limit) {
+          toast.error(`"${p.title}" is sold out!`);
+          setCheckoutLoading(false);
+          return;
+        }
 
-    // Use archive price if drop ended
-    const isDropEnded = product.drop_window_enabled && new Date(product.drop_window_end) < new Date();
-    const actualPrice = isDropEnded && product.archive_price_cents 
-      ? product.archive_price_cents 
-      : product.price_cents;
-    
-    const platformFee = Math.round(actualPrice * 0.08);
-    const artistPayout = actualPrice - platformFee;
+        const productPrice = bundleCheckout 
+          ? Math.round(p.price_cents * (1 - product.bundle_discount_percent / 100))
+          : p.price_cents;
+        const productFee = Math.round(productPrice * 0.08);
+        const productPayout = productPrice - productFee;
 
-    // Create order
-    const order = await base44.entities.Order.create({
-      artist_id: product.artist_id,
-      product_id: product.id,
-      product_title: product.title,
-      artist_name: product.artist_name,
-      buyer_email: buyerEmail.toLowerCase(),
-      amount_cents: actualPrice,
-      platform_fee_cents: platformFee,
-      artist_payout_cents: artistPayout,
-      currency: product.currency || 'USD',
-      status: 'paid',
-      stripe_session_id: 'sim_' + Date.now(),
-      edition_name: product.edition_name,
-      edition_number: editionNumber
-    });
+        const editionNumber = p.edition_type === 'limited' ? (p.total_sales || 0) + 1 : null;
 
-    // Create library item
-    const accessToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
-    await base44.entities.LibraryItem.create({
-      buyer_email: buyerEmail.toLowerCase(),
-      product_id: product.id,
-      order_id: order.id,
-      product_title: product.title,
-      artist_name: product.artist_name,
-      artist_slug: product.artist_slug,
-      cover_url: product.cover_url,
-      audio_urls: product.audio_urls || [],
-      track_names: product.track_names || [],
-      access_token: accessToken,
-      edition_name: product.edition_name,
-      edition_number: editionNumber,
-      purchase_date: new Date().toISOString()
-    });
+        // Create order
+        const order = await base44.entities.Order.create({
+          artist_id: p.artist_id,
+          product_id: p.id,
+          product_title: p.title,
+          artist_name: p.artist_name,
+          buyer_email: buyerEmail.toLowerCase(),
+          amount_cents: productPrice,
+          platform_fee_cents: productFee,
+          artist_payout_cents: productPayout,
+          currency: p.currency || 'USD',
+          status: 'paid',
+          stripe_session_id: 'sim_' + Date.now(),
+          edition_name: p.edition_name,
+          edition_number: editionNumber
+        });
 
-    // Update product stats
-    await base44.entities.Product.update(product.id, {
-      total_sales: (product.total_sales || 0) + 1,
-      total_revenue_cents: (product.total_revenue_cents || 0) + actualPrice
-    });
+        // Create library item
+        const accessToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
+        await base44.entities.LibraryItem.create({
+          buyer_email: buyerEmail.toLowerCase(),
+          product_id: p.id,
+          order_id: order.id,
+          product_title: p.title,
+          artist_name: p.artist_name,
+          artist_slug: p.artist_slug,
+          cover_url: p.cover_url,
+          audio_urls: p.audio_urls || [],
+          track_names: p.track_names || [],
+          access_token: accessToken,
+          edition_name: p.edition_name,
+          edition_number: editionNumber,
+          purchase_date: new Date().toISOString()
+        });
 
-    // Send email with library link and artist thank you note
-    const editionText = editionNumber ? `\n\nEdition: ${product.edition_name} #${editionNumber} of ${product.edition_limit}` : '';
-    const thankYouNote = artist?.thank_you_note ? `\n\n---\n\nA message from ${artist.name}:\n${artist.thank_you_note}` : '';
-    
-    await base44.integrations.Core.SendEmail({
-      to: buyerEmail,
-      subject: `🎵 You own "${product.title}" - Download Now`,
-      body: `
+        // Update product stats
+        await base44.entities.Product.update(p.id, {
+          total_sales: (p.total_sales || 0) + 1,
+          total_revenue_cents: (p.total_revenue_cents || 0) + productPrice
+        });
+      }
+
+      // Send email
+      const productList = productsToPurchase.map(p => `• ${p.title}`).join('\n');
+      const bundleNote = bundleCheckout ? `\n\n🎁 Bundle Discount: You saved ${product.bundle_discount_percent}%!` : '';
+      const thankYouNote = artist?.thank_you_note ? `\n\n---\n\nA message from ${artist.name}:\n${artist.thank_you_note}` : '';
+      
+      await base44.integrations.Core.SendEmail({
+        to: buyerEmail,
+        subject: bundleCheckout ? `🎵 You own ${productsToPurchase.length} releases!` : `🎵 You own "${product.title}" - Download Now`,
+        body: `
 Hi there!
 
-Thanks for your purchase! You now own "${product.title}" by ${product.artist_name}.${editionText}
+Thanks for your purchase! You now own:
+
+${productList}${bundleNote}
 
 Access your library anytime:
 ${window.location.origin}/Library?email=${encodeURIComponent(buyerEmail)}
@@ -181,13 +193,19 @@ You can download your music whenever you want. No expiration, no limits.${thankY
 
 Enjoy!
 — The CRATEY Team
-      `.trim()
-    });
+        `.trim()
+      });
 
-    setCheckoutLoading(false);
-    setShowCheckout(false);
-    setPurchaseComplete(true);
-    toast.success('Purchase complete! Check your email.');
+      setCheckoutLoading(false);
+      setShowCheckout(false);
+      setPurchaseComplete(true);
+      setUserOwnsThis(true);
+      toast.success('Purchase complete! Check your email.');
+    } catch (error) {
+      console.error('Checkout error:', error);
+      toast.error('Purchase failed. Please try again.');
+      setCheckoutLoading(false);
+    }
   };
 
 
@@ -478,7 +496,7 @@ Enjoy!
                   <p className="text-sm text-neutral-500">{product.artist_name}</p>
                 </div>
                 <div className="ml-auto font-bold">
-                  ${(actualPrice / 100).toFixed(2)}
+                  ${((product.drop_window_enabled && new Date(product.drop_window_end) < new Date() && product.archive_price_cents ? product.archive_price_cents : product.price_cents) / 100).toFixed(2)}
                 </div>
               </div>
             )}
