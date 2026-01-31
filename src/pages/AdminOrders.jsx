@@ -39,12 +39,32 @@ export default function AdminOrders() {
   });
 
   const refundMutation = useMutation({
-    mutationFn: async (orderId) => {
-      await base44.entities.Order.update(orderId, { status: 'refunded' });
+    mutationFn: async (order) => {
+      // Update order status
+      await base44.entities.Order.update(order.id, { status: 'refunded' });
+      
+      // Send refund notification email
+      try {
+        await base44.functions.invoke('sendStyledEmail', {
+          to: order.buyer_email,
+          subject: `Refund Processed: ${order.product_title}`,
+          title: 'Refund Confirmation',
+          bodyContent: `
+            <p>Your purchase of <strong>${order.product_title}</strong> has been refunded.</p>
+            <p>Amount refunded: <strong>$${(order.amount_cents / 100).toFixed(2)}</strong></p>
+            <p>The refund will appear in your account within 5-10 business days.</p>
+            <p style="margin-top: 20px; font-size: 14px; color: #666;">Order ID: ${order.id}</p>
+          `,
+          ctaText: null,
+          ctaUrl: null
+        });
+      } catch (emailError) {
+        console.warn('Refund email failed:', emailError);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
-      toast.success('Order refunded successfully');
+      toast.success('Order refunded and customer notified');
       setRefundingOrder(null);
     },
     onError: () => {
@@ -201,8 +221,11 @@ export default function AdminOrders() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => refundMutation.mutate(refundingOrder.id)}>
-              Process Refund
+            <AlertDialogAction 
+              onClick={() => refundMutation.mutate(refundingOrder)}
+              disabled={refundMutation.isPending}
+            >
+              {refundMutation.isPending ? 'Processing...' : 'Process Refund'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

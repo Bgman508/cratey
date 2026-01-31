@@ -22,8 +22,8 @@ export default function Layout({ children, currentPageName }) {
   }
   
   // Dashboard pages have their own layout
-  const dashboardPages = ['Dashboard', 'DashboardProducts', 'DashboardNewProduct', 'DashboardEditProduct', 'DashboardOrders', 'DashboardPayouts', 'DashboardSettings', 'DashboardAnalytics', 'DashboardStripe'];
-  
+  const dashboardPages = ['Dashboard', 'DashboardProducts', 'DashboardNewProduct', 'DashboardEditProduct', 'DashboardOrders', 'DashboardPayouts', 'DashboardSettings', 'DashboardAnalytics', 'DashboardStripe', 'AdminOrders'];
+
   if (dashboardPages.includes(currentPageName)) {
     return (
       <>

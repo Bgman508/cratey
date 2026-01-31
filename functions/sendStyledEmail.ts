@@ -42,6 +42,13 @@ const emailTemplate = (title, bodyContent, ctaText, ctaUrl) => `
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+    
+    // CRITICAL: Authenticate user - only admins or automated backend processes can send emails
+    const user = await base44.auth.me();
+    if (!user || user.role !== 'admin') {
+      return Response.json({ error: 'Unauthorized: Admin access required' }, { status: 403 });
+    }
+
     const { to, title, bodyContent, ctaText, ctaUrl, subject } = await req.json();
 
     if (!to || !subject || !bodyContent) {
@@ -50,13 +57,27 @@ Deno.serve(async (req) => {
 
     const htmlBody = emailTemplate(title || subject, bodyContent, ctaText, ctaUrl);
 
-    await base44.asServiceRole.integrations.Core.SendEmail({
-      to,
-      subject,
-      body: htmlBody
-    });
+    try {
+      await base44.asServiceRole.integrations.Core.SendEmail({
+        to,
+        subject,
+        body: htmlBody
+      });
 
-    return Response.json({ success: true });
+      return Response.json({ 
+        success: true,
+        delivered: true,
+        recipient: to
+      });
+    } catch (emailError) {
+      console.error('Email delivery failed:', emailError);
+      return Response.json({ 
+        success: false,
+        delivered: false,
+        error: emailError.message,
+        recipient: to
+      }, { status: 500 });
+    }
   } catch (error) {
     console.error('Error sending styled email:', error);
     return Response.json({ error: error.message }, { status: 500 });

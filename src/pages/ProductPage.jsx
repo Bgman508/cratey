@@ -171,45 +171,28 @@ export default function ProductPage() {
         });
       }
 
-      // Send styled email (silently fail if user not in app)
-      const productListHtml = productsToPurchase.map(p => 
-        `<li style="margin-bottom: 8px;"><strong>${p.title}</strong></li>`
-      ).join('');
-      
-      const bundleNote = bundleCheckout 
-        ? `<div style="background: #f0fdf4; border: 1px solid #86efac; padding: 12px; border-radius: 8px; margin-top: 16px;">
-             <p style="margin: 0; color: #166534; font-weight: 600;">🎁 Bundle Discount: You saved ${product.bundle_discount_percent}%!</p>
-           </div>` 
-        : '';
-      
-      const thankYouNote = artist?.thank_you_note 
-        ? `<div style="border-top: 2px solid #e5e5e5; margin-top: 24px; padding-top: 24px;">
-             <p style="font-style: italic; color: #666;">A message from ${artist.name}:</p>
-             <p>${artist.thank_you_note}</p>
-           </div>` 
-        : '';
+      // Get the created order ID
+      const latestOrder = await base44.entities.Order.filter({ 
+        product_id: product.id, 
+        buyer_email: buyerEmail.toLowerCase() 
+      }, '-created_date', 1);
 
-      const libraryUrl = `${window.location.origin}/Library?email=${encodeURIComponent(buyerEmail)}`;
-      
+      // Send purchase confirmation email
       try {
-        await base44.functions.invoke('sendStyledEmail', {
-          to: buyerEmail,
-          subject: bundleCheckout ? `🎵 You own ${productsToPurchase.length} releases!` : `🎵 You own "${product.title}"`,
-          title: bundleCheckout ? `${productsToPurchase.length} New Releases in Your Crate!` : 'Thank You for Your Purchase!',
-          bodyContent: `
-            <p>Thanks for your purchase! You now own:</p>
-            <ul style="margin: 16px 0; padding-left: 20px;">
-              ${productListHtml}
-            </ul>
-            ${bundleNote}
-            <p>You can download your music anytime. No expiration, no limits.</p>
-            ${thankYouNote}
-          `,
-          ctaText: 'Download Now',
-          ctaUrl: libraryUrl
+        const productList = productsToPurchase.map(p => ({
+          title: p.title,
+          artist_name: p.artist_name
+        }));
+
+        await base44.functions.invoke('sendPurchaseEmail', {
+          buyer_email: buyerEmail.toLowerCase(),
+          order_id: latestOrder[0]?.id,
+          products: productList,
+          is_bundle: !!bundleCheckout,
+          thank_you_note: artist?.thank_you_note || null
         });
       } catch (emailError) {
-        console.warn('Email send failed (user may not be registered):', emailError);
+        console.warn('Email send failed:', emailError);
         // Continue anyway - user can still access via library URL
       }
 

@@ -239,10 +239,13 @@ function LibraryItemCard({ item }) {
     
     window.open(url, '_blank');
     
+    // Increment download count via secure backend function
     if (order) {
-      await base44.entities.Order.update(order.id, {
-        download_count: (order.download_count || 0) + 1
-      });
+      try {
+        await base44.functions.invoke('incrementDownloadCount', { order_id: order.id });
+      } catch (e) {
+        console.warn('Failed to track download:', e);
+      }
     }
     
     setDownloading(false);

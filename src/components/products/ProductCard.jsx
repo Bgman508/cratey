@@ -85,11 +85,18 @@ export default function ProductCard({ product, showArtist = true, isOwned = fals
       )}
       
       <div className="mt-2 space-y-2">
-        <p className="font-semibold">
-          ${(product.price_cents / 100).toFixed(2)}
-        </p>
+        {product.edition_type === 'limited' && product.total_sales >= product.edition_limit ? (
+          <div className="text-sm font-semibold text-red-600">SOLD OUT</div>
+        ) : product.drop_window_enabled && product.archive_price_cents && new Date(product.drop_window_end) < new Date() ? (
+          <>
+            <p className="font-semibold">${(product.archive_price_cents / 100).toFixed(2)}</p>
+            <p className="text-xs text-neutral-400 line-through">${(product.price_cents / 100).toFixed(2)}</p>
+          </>
+        ) : (
+          <p className="font-semibold">${(product.price_cents / 100).toFixed(2)}</p>
+        )}
         
-        {product.edition_type === 'limited' && !isOwned && (
+        {product.edition_type === 'limited' && !isOwned && product.total_sales < product.edition_limit && (
           <p className="text-xs text-neutral-500">
             {product.edition_limit - (product.total_sales || 0)} of {product.edition_limit} left
           </p>
