@@ -28,22 +28,21 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Create backup file
+    // Save backup data to temp file and return as JSON response
     const backupJson = JSON.stringify(backupData, null, 2);
-    const backupBlob = new Blob([backupJson], { type: 'application/json' });
     
-    const { file_url } = await base44.asServiceRole.integrations.Core.UploadPrivateFile({
-      file: backupBlob
-    });
+    // Write to temp file for download
+    const tempPath = `/tmp/backup-${timestamp}.json`;
+    await Deno.writeTextFile(tempPath, backupJson);
 
-    console.log(`Backup created: ${file_url}`);
+    console.log(`Backup created at: ${tempPath}`);
 
     return Response.json({ 
-      success: true, 
-      backup_url: file_url,
+      success: true,
       timestamp: backupData.timestamp,
       entities_backed_up: Object.keys(backupData.entities).length,
-      total_records: Object.values(backupData.entities).reduce((sum, arr) => sum + arr.length, 0)
+      total_records: Object.values(backupData.entities).reduce((sum, arr) => sum + arr.length, 0),
+      backup_size_kb: Math.round(backupJson.length / 1024)
     });
   } catch (error) {
     console.error('Backup error:', error);
