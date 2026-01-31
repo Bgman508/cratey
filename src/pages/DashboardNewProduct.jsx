@@ -133,7 +133,10 @@ export default function DashboardNewProduct() {
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file: coverFile });
       coverUrl = file_url;
+      toast.dismiss();
+      toast.loading(`Uploading tracks (0/${audioFiles.length})...`);
     } catch (e) {
+      toast.dismiss();
       toast.error('Failed to upload cover art');
       setUploading(false);
       return;
@@ -141,11 +144,15 @@ export default function DashboardNewProduct() {
 
     // Upload audio files
     const audioUrls = [];
-    for (const track of audioFiles) {
+    for (let i = 0; i < audioFiles.length; i++) {
+      const track = audioFiles[i];
       try {
+        toast.dismiss();
+        toast.loading(`Uploading tracks (${i + 1}/${audioFiles.length})...`);
         const { file_url } = await base44.integrations.Core.UploadFile({ file: track.file });
         audioUrls.push(file_url);
       } catch (e) {
+        toast.dismiss();
         toast.error(`Failed to upload ${track.name}`);
         setUploading(false);
         return;
