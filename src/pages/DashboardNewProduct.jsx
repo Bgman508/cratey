@@ -224,11 +224,13 @@ export default function DashboardNewProduct() {
         ...bundleData
       });
 
+      toast.dismiss();
       setUploading(false);
-      toast.success(publish ? 'Product published!' : 'Draft saved');
+      toast.success(publish ? '🎉 Product published!' : '💾 Draft saved');
       navigate(createPageUrl('DashboardProducts'));
     } catch (e) {
       console.error('Failed to create product:', e);
+      toast.dismiss();
       toast.error('Failed to create product: ' + (e.message || 'Unknown error'));
       setUploading(false);
     }
