@@ -63,6 +63,7 @@ import Home from './pages/Home';
 import Library from './pages/Library';
 import LibraryAccess from './pages/LibraryAccess';
 import ProductPage from './pages/ProductPage';
+import AdminOrders from './pages/AdminOrders';
 import __Layout from './Layout.jsx';
 
 
@@ -83,6 +84,7 @@ export const PAGES = {
     "Library": Library,
     "LibraryAccess": LibraryAccess,
     "ProductPage": ProductPage,
+    "AdminOrders": AdminOrders,
 }
 
 export const pagesConfig = {

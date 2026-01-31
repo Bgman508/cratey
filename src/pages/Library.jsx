@@ -309,7 +309,7 @@ function LibraryItemCard({ item }) {
                     tracks={item.audio_urls}
                     trackNames={item.track_names}
                     isPreview={false}
-                    onDownload={(track) => handleDownload(track.url, track.name)}
+                    onDownload={(track) => handleDownload(track.url, track.name, item.order_id)}
                   />
                 ) : (
                   <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
