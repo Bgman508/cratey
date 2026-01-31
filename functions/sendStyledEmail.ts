@@ -42,13 +42,6 @@ const emailTemplate = (title, bodyContent, ctaText, ctaUrl) => `
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    
-    // SECURITY: Only allow admin users or service role (backend function) calls
-    const user = await base44.auth.me();
-    if (user?.role !== 'admin') {
-      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
-    }
-    
     const { to, title, bodyContent, ctaText, ctaUrl, subject } = await req.json();
 
     if (!to || !subject || !bodyContent) {
@@ -57,7 +50,7 @@ Deno.serve(async (req) => {
 
     const htmlBody = emailTemplate(title || subject, bodyContent, ctaText, ctaUrl);
 
-    await base44.integrations.Core.SendEmail({
+    await base44.asServiceRole.integrations.Core.SendEmail({
       to,
       subject,
       body: htmlBody
