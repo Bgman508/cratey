@@ -9,12 +9,23 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'order_id required' }, { status: 400 });
     }
 
-    // Fetch order using service role to increment atomically
+    // Authenticate user
+    const user = await base44.auth.me();
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Fetch order using service role to verify ownership
     const orders = await base44.asServiceRole.entities.Order.filter({ id: order_id });
     const order = orders[0];
 
     if (!order) {
       return Response.json({ error: 'Order not found' }, { status: 404 });
+    }
+
+    // Verify user owns this order or is admin
+    if (order.buyer_email !== user.email && user.role !== 'admin') {
+      return Response.json({ error: 'Forbidden: You do not own this order' }, { status: 403 });
     }
 
     // Atomic increment
