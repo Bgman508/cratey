@@ -161,25 +161,15 @@ export default function DashboardNewProduct() {
           const { file_url } = await base44.integrations.Core.UploadFile({ file: preview });
           previewUrls.push(file_url);
         } catch (e) {
+          toast.dismiss();
           toast.error(`Failed to upload preview`);
           setUploading(false);
           return;
         }
       }
     } else {
-      // Auto-generate previews from full tracks (first 30 seconds)
-      toast.info('Generating preview clips...');
-      try {
-        const { preview_urls } = await base44.functions.invoke('generateAudioPreviews', {
-          audio_urls: audioUrls
-        });
-        previewUrls = preview_urls.filter(url => url !== null);
-      } catch (e) {
-        console.error('Failed to auto-generate previews:', e);
-        // Fall back to using full tracks as previews
-        previewUrls = audioUrls;
-        toast.info('Using full tracks as previews');
-      }
+      // Use full tracks as previews (preview generation happens in background)
+      previewUrls = audioUrls;
     }
 
     // Prepare edition and drop window data
