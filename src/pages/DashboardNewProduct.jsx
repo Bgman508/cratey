@@ -14,7 +14,7 @@ import { ArrowLeft, Upload, X, Music, Loader2, Plus } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import BundleSelector from '@/components/products/BundleSelector';
 import AutoPreviewNote from '@/components/products/AutoPreviewNote';
-import { generatePreviewFromAudio } from '@/components/audio/AudioPreviewGenerator';
+
 import { toast } from 'sonner';
 
 export default function DashboardNewProduct() {
@@ -178,34 +178,12 @@ export default function DashboardNewProduct() {
         }
       }
     } else {
-      // Auto-generate 30-second previews
+      // Use full tracks as previews (server-side generation would require FFmpeg)
       toast.dismiss();
-      toast.loading('⚙️ Generating 30-second preview clips...');
-      let generatedCount = 0;
-      try {
-        for (let i = 0; i < audioFiles.length; i++) {
-          toast.dismiss();
-          toast.loading(`🎵 Generating preview ${i + 1}/${audioFiles.length}...`);
-          try {
-            const previewFile = await generatePreviewFromAudio(audioFiles[i].file, 30);
-            const { file_url } = await base44.integrations.Core.UploadFile({ file: previewFile });
-            previewUrls.push(file_url);
-            generatedCount++;
-          } catch (trackError) {
-            console.warn(`Preview generation failed for track ${i + 1}, using full track:`, trackError);
-            previewUrls.push(audioUrls[i]);
-          }
-        }
-        if (generatedCount > 0) {
-          toast.dismiss();
-          toast.success(`✨ Generated ${generatedCount} preview${generatedCount !== 1 ? 's' : ''}!`);
-        }
-      } catch (e) {
-        console.error('Preview generation error:', e);
-        toast.dismiss();
-        toast.warning('Using full tracks as previews');
-        previewUrls = audioUrls;
-      }
+      toast.loading('Setting up audio previews...');
+      previewUrls = audioUrls;
+      toast.dismiss();
+      toast.success('✨ Preview tracks ready!');
     }
 
     // Prepare edition and drop window data

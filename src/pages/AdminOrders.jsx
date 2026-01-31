@@ -20,7 +20,7 @@ export default function AdminOrders() {
     const loadUser = async () => {
       try {
         const currentUser = await base44.auth.me();
-        if (currentUser.role !== 'admin') {
+        if (!currentUser || currentUser.role !== 'admin') {
           window.location.href = '/';
           return;
         }
@@ -34,7 +34,7 @@ export default function AdminOrders() {
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['admin-orders'],
-    queryFn: () => base44.entities.Order.list('-created_date', 100),
+    queryFn: () => base44.entities.Order.list('-created_date', 500),
     enabled: !!user
   });
 
@@ -82,7 +82,14 @@ export default function AdminOrders() {
   const totalRevenue = orders.filter(o => o.status === 'paid').reduce((sum, o) => sum + (o.amount_cents || 0), 0);
   const totalRefunded = orders.filter(o => o.status === 'refunded').reduce((sum, o) => sum + (o.amount_cents || 0), 0);
 
-  if (!user) return null;
+  // Guard: Don't render until user is verified as admin
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-neutral-400" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-neutral-50 p-6">

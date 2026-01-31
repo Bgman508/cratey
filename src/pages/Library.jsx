@@ -19,8 +19,54 @@ export default function Library() {
   const tokenFromUrl = urlParams.get('token');
   
   const [email, setEmail] = useState(emailFromUrl || '');
-  const [verified, setVerified] = useState(!!emailFromUrl);
+  const [verified, setVerified] = useState(false);
   const [sendingLink, setSendingLink] = useState(false);
+  const [validatingToken, setValidatingToken] = useState(!!tokenFromUrl);
+
+  // Validate token on mount
+  useEffect(() => {
+    const validateToken = async () => {
+      if (tokenFromUrl && emailFromUrl) {
+        setValidatingToken(true);
+        try {
+          const tokens = await base44.entities.LibraryAccessToken.filter({
+            token: tokenFromUrl,
+            buyer_email: emailFromUrl.toLowerCase(),
+            used: false
+          });
+
+          if (tokens.length > 0) {
+            const token = tokens[0];
+            const now = new Date();
+            const expiresAt = new Date(token.expires_at);
+
+            if (now < expiresAt) {
+              // Mark token as used
+              await base44.entities.LibraryAccessToken.update(token.id, { used: true });
+              saveLibraryAccess(emailFromUrl);
+              setEmail(emailFromUrl);
+              setVerified(true);
+              toast.success('Access granted!');
+            } else {
+              toast.error('Access link expired. Request a new one.');
+            }
+          } else {
+            toast.error('Invalid access link');
+          }
+        } catch (error) {
+          console.error('Token validation error:', error);
+          toast.error('Failed to validate access');
+        }
+        setValidatingToken(false);
+      } else if (emailFromUrl && hasLibraryAccess(emailFromUrl)) {
+        // User has persistent access
+        setEmail(emailFromUrl);
+        setVerified(true);
+      }
+    };
+
+    validateToken();
+  }, [tokenFromUrl, emailFromUrl]);
 
   const { data: libraryItems = [], isLoading, refetch } = useQuery({
     queryKey: ['library', email],
@@ -37,33 +83,16 @@ export default function Library() {
     setSendingLink(true);
     
     try {
-      const items = await base44.entities.LibraryItem.filter({ buyer_email: email.toLowerCase() });
-      
-      if (items.length === 0) {
-        toast.error('No purchases found for this email');
-        setSendingLink(false);
-        return;
-      }
-
-      const accessUrl = `${window.location.origin}${createPageUrl('Library')}?email=${encodeURIComponent(email)}`;
-      
-      await base44.functions.invoke('sendStyledEmail', {
-        to: email,
-        subject: '🎵 Access Your CRATEY Library',
-        title: 'Your Music Library',
-        bodyContent: `
-          <p>You have <strong>${items.length} item${items.length !== 1 ? 's' : ''}</strong> in your crate.</p>
-          <p>Click below to access all your CRATEY purchases. Download anytime, anywhere.</p>
-        `,
-        ctaText: 'Open My Library',
-        ctaUrl: accessUrl
-      });
-
+      await base44.functions.invoke('sendLibraryAccessEmail', { email: email.toLowerCase() });
       setSendingLink(false);
       toast.success('Access link sent! Check your email.');
     } catch (error) {
       setSendingLink(false);
-      toast.error('Failed to send link');
+      if (error.message?.includes('No purchases found')) {
+        toast.error('No purchases found for this email');
+      } else {
+        toast.error('Failed to send link');
+      }
     }
   };
 
@@ -76,6 +105,17 @@ export default function Library() {
     setVerified(true);
     refetch();
   };
+
+  if (validatingToken) {
+    return (
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+          <p className="text-neutral-600">Validating access...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!verified) {
     return (
@@ -312,7 +352,7 @@ function LibraryItemCard({ item }) {
                     tracks={item.audio_urls}
                     trackNames={item.track_names}
                     isPreview={false}
-                    onDownload={(track) => handleDownload(track.url, track.name, item.order_id)}
+                    onDownload={(track) => handleDownload(track.url, track.name)}
                   />
                 ) : (
                   <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">

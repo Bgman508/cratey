@@ -84,9 +84,14 @@ export default function ProductCard({ product, showArtist = true, isOwned = fals
         </p>
       )}
       
-      <div className="mt-2 space-y-2">
+      <div className="mt-2 space-y-1">
         {product.edition_type === 'limited' && product.total_sales >= product.edition_limit ? (
-          <div className="text-sm font-semibold text-red-600">SOLD OUT</div>
+          <>
+            <div className="inline-block px-2 py-1 bg-red-100 text-red-700 text-xs font-bold rounded">
+              SOLD OUT
+            </div>
+            <p className="text-sm text-neutral-400 line-through">${(product.price_cents / 100).toFixed(2)}</p>
+          </>
         ) : product.drop_window_enabled && product.archive_price_cents && new Date(product.drop_window_end) < new Date() ? (
           <>
             <p className="font-semibold">${(product.archive_price_cents / 100).toFixed(2)}</p>

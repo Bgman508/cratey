@@ -80,6 +80,24 @@ export default function ProductPage() {
       return;
     }
 
+    // Validate drop window
+    if (product.drop_window_enabled && product.drop_window_end) {
+      const now = new Date();
+      const dropEnd = new Date(product.drop_window_end);
+      if (now > dropEnd && !product.archive_price_cents) {
+        toast.error('This release is no longer available');
+        return;
+      }
+    }
+
+    // Validate edition limit
+    if (product.edition_type === 'limited' && product.edition_limit) {
+      if (product.total_sales >= product.edition_limit) {
+        toast.error('This edition is sold out');
+        return;
+      }
+    }
+
     setCheckoutLoading(true);
 
     try {
@@ -121,9 +139,18 @@ export default function ProductPage() {
           return;
         }
 
+        // Calculate price based on drop window and bundle
+        let basePrice = p.price_cents;
+        if (p.drop_window_enabled && p.drop_window_end) {
+          const dropEnded = new Date(p.drop_window_end) < new Date();
+          if (dropEnded && p.archive_price_cents) {
+            basePrice = p.archive_price_cents;
+          }
+        }
+
         const productPrice = bundleCheckout 
-          ? Math.round(p.price_cents * (1 - product.bundle_discount_percent / 100))
-          : p.price_cents;
+          ? Math.round(basePrice * (1 - (p.bundle_discount_percent || product.bundle_discount_percent) / 100))
+          : basePrice;
         const productFee = Math.round(productPrice * 0.08);
         const productPayout = productPrice - productFee;
 
