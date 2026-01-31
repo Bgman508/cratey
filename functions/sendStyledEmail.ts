@@ -43,9 +43,11 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     
-    // SECURITY: This function can only be called by other backend functions (service role)
-    // It cannot be invoked directly from the frontend
-    // The SDK automatically handles this - frontend calls use user token, backend uses service role
+    // SECURITY: Only allow admin users or service role (backend function) calls
+    const user = await base44.auth.me();
+    if (user?.role !== 'admin') {
+      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+    }
     
     const { to, title, bodyContent, ctaText, ctaUrl, subject } = await req.json();
 
