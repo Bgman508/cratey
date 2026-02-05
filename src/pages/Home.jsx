@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { productAPI, artistAPI, libraryAPI } from '@/api/apiClient';
-import { createPageUrl } from '@/utils';
+
 import { Search, ArrowRight, Play, Pause, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -81,13 +81,13 @@ export default function Home() {
               No subscriptions, no DRM, no nonsense.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <Link to={createPageUrl('Artists')}>
+              <Link to='/artists'>
                 <Button size="lg" className="w-full sm:w-auto bg-white text-black hover:bg-neutral-200">
                   Explore Artists
                   <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
               </Link>
-              <Link to={createPageUrl('ArtistSignup')}>
+              <Link to='/artist-signup'>
                 <Button size="lg" variant="outline" className="w-full sm:w-auto border-white text-white hover:bg-white/10">
                   Sell Your Music
                 </Button>
@@ -126,7 +126,7 @@ export default function Home() {
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <h2 className="text-sm font-medium text-neutral-500 uppercase tracking-wider mb-6">Featured Release</h2>
           <Link 
-            to={createPageUrl('ProductPage') + `?id=${featuredProduct.id}`}
+            to={`/product?id=${featuredProduct.id}`}
             className="block group"
           >
             <div className="relative bg-neutral-50 rounded-2xl overflow-hidden">
@@ -168,7 +168,7 @@ export default function Home() {
             {searchQuery ? 'Search Results' : 'New Releases'}
           </h2>
           {!searchQuery && (
-            <Link to={createPageUrl('Artists')} className="text-sm font-medium text-neutral-600 hover:text-black flex items-center gap-1">
+            <Link to='/artists' className="text-sm font-medium text-neutral-600 hover:text-black flex items-center gap-1">
               View All <ArrowRight className="w-4 h-4" />
             </Link>
           )}
@@ -206,7 +206,7 @@ export default function Home() {
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 bg-neutral-50 rounded-3xl mx-4 lg:mx-auto">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl font-bold">Artists</h2>
-            <Link to={createPageUrl('Artists')} className="text-sm font-medium text-neutral-600 hover:text-black flex items-center gap-1">
+            <Link to='/artists' className="text-sm font-medium text-neutral-600 hover:text-black flex items-center gap-1">
               View All <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
