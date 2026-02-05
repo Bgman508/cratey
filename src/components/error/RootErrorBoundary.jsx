@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, RefreshCw, Home } from 'lucide-react';
-import { createPageUrl } from '@/utils';
+
 
 class RootErrorBoundary extends React.Component {
   constructor(props) {
@@ -56,7 +56,7 @@ class RootErrorBoundary extends React.Component {
               </Button>
               <Button 
                 variant="outline"
-                onClick={() => window.location.href = createPageUrl('Home')}
+                onClick={() => window.location.href = '/'}
                 className="w-full"
               >
                 <Home className="w-4 h-4 mr-2" />
