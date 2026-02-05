@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
-import { createPageUrl } from '@/utils';
+import { authAPI, artistAPI, productAPI } from '@/api/apiClient';
+
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -43,45 +43,46 @@ export default function DashboardProducts() {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const currentUser = await base44.auth.me();
-        setUser(currentUser);
+        const response = await authAPI.me();
+        setUser(response.data);
       } catch (e) {
-        base44.auth.redirectToLogin();
+        window.location.href = '/login';
       }
     };
     loadUser();
   }, []);
 
-  const { data: artist } = useQuery({
-    queryKey: ['my-artist', user?.email],
-    queryFn: async () => {
-      const artists = await base44.entities.Artist.filter({ owner_email: user.email });
-      return artists[0] || null;
-    },
+  const { data: artistResponse } = useQuery({
+    queryKey: ['my-artist'],
+    queryFn: () => artistAPI.getDashboardStats(),
     enabled: !!user?.email
   });
 
-  const { data: products = [], isLoading } = useQuery({
-    queryKey: ['my-products', artist?.id],
-    queryFn: () => base44.entities.Product.filter({ artist_id: artist.id }, '-created_date'),
-    enabled: !!artist?.id
+  const artist = artistResponse?.data;
+
+  const { data: productsResponse, isLoading } = useQuery({
+    queryKey: ['my-products'],
+    queryFn: () => productAPI.list({ limit: 100 }),
+    enabled: !!artist
   });
+
+  const products = productsResponse?.data?.products || [];
 
   const toggleStatusMutation = useMutation({
     mutationFn: async (product) => {
-      const newStatus = product.status === 'live' ? 'draft' : 'live';
-      await base44.entities.Product.update(product.id, { status: newStatus });
+      const newStatus = product.status === 'active' ? 'draft' : 'active';
+      await productAPI.update(product.id, { status: newStatus });
       return newStatus;
     },
     onSuccess: (newStatus) => {
       queryClient.invalidateQueries(['my-products']);
-      toast.success(`Product ${newStatus === 'live' ? 'published' : 'unpublished'}`);
+      toast.success(`Product ${newStatus === 'active' ? 'published' : 'unpublished'}`);
     }
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (productId) => {
-      await base44.entities.Product.delete(productId);
+      await productAPI.delete(productId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['my-products']);
@@ -99,7 +100,7 @@ export default function DashboardProducts() {
             <h1 className="text-3xl font-bold">Products</h1>
             <p className="text-neutral-600">Manage your music catalog</p>
           </div>
-          <Link to={createPageUrl('DashboardNewProduct')}>
+          <Link to='/dashboard/products/new'>
             <Button className="bg-black text-white hover:bg-neutral-800">
               <Plus className="w-4 h-4 mr-2" />
               New Release
@@ -130,7 +131,7 @@ export default function DashboardProducts() {
                       <p className="text-neutral-600 capitalize">{product.type}</p>
                       <div className="flex items-center gap-3 mt-2">
                         <span className="font-medium">${(product.price_cents / 100).toFixed(2)}</span>
-                        <Badge variant={product.status === 'live' ? 'default' : 'secondary'}>
+                        <Badge variant={product.status === 'active' ? 'default' : 'secondary'}>
                           {product.status}
                         </Badge>
                         <span className="text-sm text-neutral-500">
@@ -140,7 +141,7 @@ export default function DashboardProducts() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Link 
-                        to={createPageUrl('ProductPage') + `?id=${product.id}`}
+                        to={`/product?id=${product.id}`}
                         target="_blank"
                       >
                         <Button variant="outline" size="sm">
@@ -154,12 +155,12 @@ export default function DashboardProducts() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => window.location.href = createPageUrl('DashboardEditProduct') + `?id=${product.id}`}>
+                          <DropdownMenuItem onClick={() => window.location.href = `/dashboard/products/edit?id=${product.id}`}>
                             <Pencil className="w-4 h-4 mr-2" />
                             Edit
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => toggleStatusMutation.mutate(product)}>
-                            {product.status === 'live' ? (
+                            {product.status === 'active' ? (
                               <>
                                 <EyeOff className="w-4 h-4 mr-2" />
                                 Unpublish
@@ -194,7 +195,7 @@ export default function DashboardProducts() {
               </div>
               <h3 className="text-xl font-bold mb-2">No products yet</h3>
               <p className="text-neutral-500 mb-6">Create your first release to start selling</p>
-              <Link to={createPageUrl('DashboardNewProduct')}>
+              <Link to='/dashboard/products/new'>
                 <Button className="bg-black text-white hover:bg-neutral-800">
                   Create Your First Release
                 </Button>
