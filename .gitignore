@@ -1,6 +1,18 @@
-#env
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Build outputs
+dist
+dist-ssr
+*.local
+build
+
+# Environment variables
 .env
-.env.*
+.env.local
+.env.*.local
 
 # Logs
 logs
@@ -10,11 +22,6 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-
-node_modules
-dist
-dist-ssr
-*.local
 
 # Editor directories and files
 .vscode/*
@@ -27,4 +34,25 @@ dist-ssr
 *.sln
 *.sw?
 
-.env
+# Testing
+coverage
+*.lcov
+.nyc_output
+
+# Temporary files
+*.tmp
+*.temp
+.cache
+.temp
+
+# OS files
+Thumbs.db
+
+# Uploads
+uploads/
+*.mp3
+*.wav
+*.flac
+
+# Stripe CLI
+.stripe/

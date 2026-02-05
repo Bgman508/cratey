@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { productAPI, artistAPI, libraryAPI } from '@/api/apiClient';
 import { createPageUrl } from '@/utils';
 import { Search, ArrowRight, Play, Pause, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -16,10 +16,12 @@ export default function Home() {
   const [userEmail, setUserEmail] = useState('');
   const [ownedProductIds, setOwnedProductIds] = useState([]);
   
-  const { data: products = [], isLoading: productsLoading } = useQuery({
+  const { data: productsData, isLoading: productsLoading } = useQuery({
     queryKey: ['products', 'live'],
-    queryFn: () => base44.entities.Product.filter({ status: 'live' }, '-created_date', 12)
+    queryFn: () => productAPI.list({ status: 'active', limit: 12 })
   });
+
+  const products = productsData?.products || [];
 
   // Check if user has email in URL (coming from library)
   useEffect(() => {
@@ -42,24 +44,26 @@ export default function Home() {
   useQuery({
     queryKey: ['owned-products', userEmail],
     queryFn: async () => {
-      const items = await base44.entities.LibraryItem.filter({ buyer_email: userEmail.toLowerCase() });
-      const ids = items.map(item => item.product_id);
+      const response = await libraryAPI.list(userEmail);
+      const ids = response.data.items.map(item => item.product_id);
       setOwnedProductIds(ids);
-      return items;
+      return response.data.items;
     },
     enabled: !!userEmail
   });
 
-  const { data: artists = [], isLoading: artistsLoading } = useQuery({
+  const { data: artistsData, isLoading: artistsLoading } = useQuery({
     queryKey: ['artists', 'featured'],
-    queryFn: () => base44.entities.Artist.list('-created_date', 8)
+    queryFn: () => artistAPI.list({ limit: 8 })
   });
+
+  const artists = artistsData?.artists || [];
 
   const filteredProducts = searchQuery 
     ? fuzzyFilter(products, searchQuery, ['title', 'artist_name', 'type', 'description', 'genre', 'tags'])
     : products;
 
-  const featuredProduct = products.find(p => p.status === 'live');
+  const featuredProduct = products.find(p => p.status === 'active');
 
   return (
     <div className="min-h-screen">

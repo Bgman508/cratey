@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { artistAPI } from '@/api/apiClient';
 import { createPageUrl } from '@/utils';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -12,10 +12,12 @@ import { fuzzyFilter } from '@/components/search/FuzzySearch';
 export default function Artists() {
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { data: artists = [], isLoading } = useQuery({
+  const { data: artistsData, isLoading } = useQuery({
     queryKey: ['artists'],
-    queryFn: () => base44.entities.Artist.list('-created_date')
+    queryFn: () => artistAPI.list()
   });
+
+  const artists = artistsData?.artists || [];
 
   const filteredArtists = searchQuery 
     ? fuzzyFilter(artists, searchQuery, ['name', 'bio'])
