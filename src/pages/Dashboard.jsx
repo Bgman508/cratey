@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
-import { createPageUrl } from '@/utils';
+import { authAPI, artistAPI, productAPI, orderAPI, analyticsAPI } from '@/api/apiClient';
+
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,36 +17,39 @@ export default function Dashboard() {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const currentUser = await base44.auth.me();
-        setUser(currentUser);
+        const response = await authAPI.me();
+        setUser(response.data);
       } catch (e) {
-        base44.auth.redirectToLogin();
+        window.location.href = '/login';
       }
       setLoading(false);
     };
     loadUser();
   }, []);
 
-  const { data: artist } = useQuery({
-    queryKey: ['my-artist', user?.email],
-    queryFn: async () => {
-      const artists = await base44.entities.Artist.filter({ owner_email: user.email });
-      return artists[0] || null;
-    },
+  const { data: artistResponse } = useQuery({
+    queryKey: ['my-artist'],
+    queryFn: () => artistAPI.getDashboardStats(),
     enabled: !!user?.email
   });
 
-  const { data: products = [] } = useQuery({
-    queryKey: ['my-products', artist?.id],
-    queryFn: () => base44.entities.Product.filter({ artist_id: artist.id }, '-created_date'),
-    enabled: !!artist?.id
+  const artist = artistResponse?.data;
+
+  const { data: productsResponse } = useQuery({
+    queryKey: ['my-products'],
+    queryFn: () => productAPI.list({ artist_id: artist?.id, limit: 100 }),
+    enabled: !!artist
   });
 
-  const { data: orders = [] } = useQuery({
-    queryKey: ['my-orders', artist?.id],
-    queryFn: () => base44.entities.Order.filter({ artist_id: artist.id, status: 'paid' }, '-created_date', 10),
-    enabled: !!artist?.id
+  const products = productsResponse?.data?.products || [];
+
+  const { data: ordersResponse } = useQuery({
+    queryKey: ['my-orders'],
+    queryFn: () => orderAPI.list({ type: 'artist', status: 'paid', limit: 10 }),
+    enabled: !!artist
   });
+
+  const orders = ordersResponse?.data?.orders || [];
 
   if (loading) {
     return (
@@ -74,7 +77,7 @@ export default function Dashboard() {
           <p className="text-neutral-600 mb-8">
             Set up your storefront to start selling your music directly to fans.
           </p>
-          <Link to={createPageUrl('DashboardSettings')}>
+          <Link to='/dashboard/settings'>
             <Button size="lg" className="bg-black text-white hover:bg-neutral-800">
               <Plus className="w-5 h-5 mr-2" />
               Create Artist Profile
@@ -87,7 +90,7 @@ export default function Dashboard() {
 
   const totalRevenue = orders.reduce((sum, o) => sum + (o.artist_payout_cents || 0), 0);
   const totalSales = orders.length;
-  const liveProducts = products.filter(p => p.status === 'live').length;
+  const liveProducts = products.filter(p => p.status === 'active').length;
 
   return (
     <DashboardLayout currentPage="Dashboard" artist={artist}>
@@ -98,7 +101,7 @@ export default function Dashboard() {
             <h1 className="text-3xl font-bold">Dashboard</h1>
             <p className="text-neutral-600">Welcome back, {artist.name}</p>
           </div>
-          <Link to={createPageUrl('DashboardNewProduct')}>
+          <Link to='/dashboard/products/new'>
             <Button className="bg-black text-white hover:bg-neutral-800">
               <Plus className="w-4 h-4 mr-2" />
               New Release
@@ -161,7 +164,7 @@ export default function Dashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Recent Orders</CardTitle>
-              <Link to={createPageUrl('DashboardOrders')}>
+              <Link to='/dashboard/orders'>
                 <Button variant="ghost" size="sm">
                   View All <ArrowRight className="w-4 h-4 ml-1" />
                 </Button>
@@ -179,7 +182,7 @@ export default function Dashboard() {
                       <div className="text-right">
                         <p className="font-medium">${(order.artist_payout_cents / 100).toFixed(2)}</p>
                         <p className="text-xs text-neutral-500">
-                          {new Date(order.created_date).toLocaleDateString()}
+                          {new Date(order.createdAt).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
@@ -195,7 +198,7 @@ export default function Dashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Your Products</CardTitle>
-              <Link to={createPageUrl('DashboardProducts')}>
+              <Link to='/dashboard/products'>
                 <Button variant="ghost" size="sm">
                   View All <ArrowRight className="w-4 h-4 ml-1" />
                 </Button>
@@ -217,7 +220,7 @@ export default function Dashboard() {
                       </div>
                       <div className="text-right">
                         <span className={`px-2 py-1 text-xs rounded-full ${
-                          product.status === 'live' 
+                          product.status === 'active' 
                             ? 'bg-green-100 text-green-700' 
                             : 'bg-neutral-100 text-neutral-600'
                         }`}>
@@ -230,7 +233,7 @@ export default function Dashboard() {
               ) : (
                 <div className="text-center py-8">
                   <p className="text-neutral-500 mb-4">No products yet</p>
-                  <Link to={createPageUrl('DashboardNewProduct')}>
+                  <Link to='/dashboard/products/new'>
                     <Button size="sm">Create Your First Release</Button>
                   </Link>
                 </div>
@@ -262,7 +265,7 @@ export default function Dashboard() {
                 >
                   Copy
                 </Button>
-                <Link to={createPageUrl('ArtistStorefront') + `?slug=${artist.slug}`} target="_blank">
+                <Link to={`/artist-storefront?slug=${artist.slug}`} target="_blank">
                   <Button>View Store</Button>
                 </Link>
               </div>
