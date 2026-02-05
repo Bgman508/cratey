@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
+
 import { Play, Pause } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import EditionBadge from '@/components/products/EditionBadge';
@@ -33,7 +33,7 @@ export default function ProductCard({ product, showArtist = true, isOwned = fals
 
   return (
     <Link 
-      to={createPageUrl('ProductPage') + `?id=${product.id}`}
+      to={`/product?id=${product.id}`}
       className="group block"
     >
       <div className="relative aspect-square rounded-lg overflow-hidden bg-neutral-100 mb-3">
