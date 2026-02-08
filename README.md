@@ -2,7 +2,7 @@
 
 A modern music sample marketplace where artists can sell their sounds and producers can discover high-quality samples. Built with React, Express, and Stripe.
 
-![Cratey](https://via.placeholder.com/800x400?text=Cratey+Music+Marketplace)
+![Cratey](./docs/cratey-screenshot.png)
 
 ## Features
 
