@@ -1,0 +1,83 @@
+{
+  "name": "Artist",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Artist display name"
+    },
+    "slug": {
+      "type": "string",
+      "description": "URL-friendly unique identifier"
+    },
+    "bio": {
+      "type": "string",
+      "description": "Artist biography"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Profile image URL"
+    },
+    "cover_url": {
+      "type": "string",
+      "description": "Cover/banner image URL"
+    },
+    "stripe_account_id": {
+      "type": "string",
+      "description": "Stripe Connect account ID for payouts"
+    },
+    "stripe_onboarding_complete": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether Stripe Connect setup is complete"
+    },
+    "owner_email": {
+      "type": "string",
+      "description": "Email of the artist owner"
+    },
+    "featured": {
+      "type": "boolean",
+      "default": false,
+      "description": "Featured on marketplace homepage"
+    },
+    "thank_you_note": {
+      "type": "string",
+      "description": "Personal message sent with every purchase"
+    }
+  },
+  "required": [
+    "name",
+    "slug",
+    "owner_email"
+  ],
+  "rls": {
+    "create": {
+      "data.owner_email": "{{user.email}}"
+    },
+    "read": {},
+    "update": {
+      "$or": [
+        {
+          "data.owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

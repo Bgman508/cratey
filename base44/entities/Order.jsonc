@@ -1,0 +1,114 @@
+{
+  "name": "Order",
+  "type": "object",
+  "properties": {
+    "artist_id": {
+      "type": "string",
+      "description": "Reference to Artist",
+      "index": true
+    },
+    "product_id": {
+      "type": "string",
+      "description": "Reference to Product",
+      "index": true
+    },
+    "product_title": {
+      "type": "string",
+      "description": "Denormalized product title"
+    },
+    "artist_name": {
+      "type": "string",
+      "description": "Denormalized artist name"
+    },
+    "edition_name": {
+      "type": "string",
+      "description": "Edition purchased (if applicable)"
+    },
+    "edition_number": {
+      "type": "number",
+      "description": "Edition number (e.g., #47 of 1000)"
+    },
+    "buyer_email": {
+      "type": "string",
+      "description": "Buyer's email address",
+      "index": true
+    },
+    "stripe_session_id": {
+      "type": "string",
+      "description": "Stripe Checkout session ID"
+    },
+    "stripe_payment_intent": {
+      "type": "string",
+      "description": "Stripe Payment Intent ID"
+    },
+    "amount_cents": {
+      "type": "number",
+      "description": "Total amount charged in cents"
+    },
+    "platform_fee_cents": {
+      "type": "number",
+      "description": "Platform fee (8%) in cents"
+    },
+    "artist_payout_cents": {
+      "type": "number",
+      "description": "Amount to artist (92%) in cents"
+    },
+    "currency": {
+      "type": "string",
+      "default": "USD"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "paid",
+        "refunded",
+        "failed"
+      ],
+      "default": "pending",
+      "index": true
+    },
+    "download_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of times downloaded"
+    }
+  },
+  "required": [
+    "product_id",
+    "buyer_email",
+    "amount_cents"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.buyer_email": "{{user.email}}"
+        },
+        {
+          "data.artist_id": "{{user.data.artist_profile_id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

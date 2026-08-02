@@ -1,0 +1,100 @@
+{
+  "name": "LibraryItem",
+  "type": "object",
+  "properties": {
+    "buyer_email": {
+      "type": "string",
+      "description": "Owner's email address"
+    },
+    "product_id": {
+      "type": "string",
+      "description": "Reference to Product"
+    },
+    "order_id": {
+      "type": "string",
+      "description": "Reference to Order"
+    },
+    "product_title": {
+      "type": "string",
+      "description": "Denormalized product title"
+    },
+    "artist_name": {
+      "type": "string",
+      "description": "Denormalized artist name"
+    },
+    "artist_slug": {
+      "type": "string",
+      "description": "Denormalized artist slug"
+    },
+    "cover_url": {
+      "type": "string",
+      "description": "Denormalized cover art URL"
+    },
+    "audio_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Denormalized audio file URLs"
+    },
+    "track_names": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Denormalized track names"
+    },
+    "access_token": {
+      "type": "string",
+      "description": "Unique token for library access"
+    },
+    "edition_name": {
+      "type": "string",
+      "description": "Edition purchased"
+    },
+    "edition_number": {
+      "type": "number",
+      "description": "Edition number (#X of Y)"
+    },
+    "purchase_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Date of purchase"
+    }
+  },
+  "required": [
+    "buyer_email",
+    "product_id",
+    "order_id",
+    "access_token"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.buyer_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
