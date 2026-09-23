@@ -56,3 +56,4 @@ uploads/
 
 # Stripe CLI
 .stripe/
+base44/.app.jsonc
